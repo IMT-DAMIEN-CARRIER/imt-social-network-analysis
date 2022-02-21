@@ -1,0 +1,30 @@
+.Db-Selector {
+    margin-bottom: 2em;
+}
+
+.Actions-Btn-Container {
+    margin-top: 2em;
+    display: flex;
+}
+
+.Action-Btn {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.Action-Btn:first-child {
+    margin-right: 20px;
+}
+
+.Action-Btn:last-child {
+    margin-left: 20px;
+}
+
+.Action-Form {
+    width: 70%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
