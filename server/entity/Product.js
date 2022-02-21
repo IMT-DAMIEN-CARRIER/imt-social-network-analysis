@@ -3,4 +3,4 @@ const Product = (productName, price) => {
     this.price = price;
 }
 
-export default Product;
+module.exports = Product;
