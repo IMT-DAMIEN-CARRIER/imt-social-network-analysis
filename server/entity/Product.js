@@ -1,5 +1,4 @@
-const Product = (id, productName, price) => {
-    this.id = id;
+const Product = (productName, price) => {
     this.productName = productName;
     this.price = price;
 }
