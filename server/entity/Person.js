@@ -1,5 +1,4 @@
-const Person = (id, firstName, lastName) => {
-    this.id = id;
+const Person = (firstName, lastName) => {
     this.firstName = firstName;
     this.lastName = lastName;
 }

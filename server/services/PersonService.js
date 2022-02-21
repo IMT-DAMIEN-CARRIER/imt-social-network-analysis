@@ -1,28 +1,15 @@
 import Person from '../entity/Person';
-
-const generateString = () => {
-    let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const charactersLength = characters.length;
-
-    for (let i = 0; i < 8; i++) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-
-    return result;
-};
+import faker from '@faker-js/faker';
 
 const generatePerson = (nbPerson) => {
     let tabPersons = [];
 
     for (let i = 0; i < nbPerson; i++) {
+        const firstname = faker.name.firstName();
+        const lastname = faker.name.lastName();
+        const currentPerson = new Person(firstname, lastname);
 
-        const randomFirstName = generateString();
-        const randomLastName = generateString();
-
-        const currentPerson = new Person(i, randomFirstName, randomLastName);
-
-        tabPersons.push(currentPerson)
+        tabPersons.push(currentPerson);
     }
 
     return tabPersons;
@@ -34,9 +21,7 @@ const generateRelations = (allPersons) => {
 
     allPersons.forEach(person => {
         let idAlreadyUsed = []
-
         const nbCurrentRelations = Math.floor(Math.random() * (nbRelationMax + 1));
-
 
         for (let i = 0; i < nbCurrentRelations; i++) {
             let randomPerson = allPersons[Math.floor(Math.random() * allPersons.length)];
@@ -56,7 +41,6 @@ const generateRelations = (allPersons) => {
 
     return relations;
 }
-
 
 export default {
     generatePerson,
