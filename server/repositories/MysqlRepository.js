@@ -41,18 +41,18 @@ const createMysqlStructure = async () => {
     `
 
     try {
-        const start = +new Date();
+        const start = Date.now();
 
         await sequelize.query(person)
         await sequelize.query(relation)
         await sequelize.query(product)
         await sequelize.query(order)
 
-        const end = +new Date();
+        const end = Date.now();
 
         return {
             "status" : 200,
-            "data" : "Toutes les tables ont été correctements ajoutées",
+            "data" : "done",
             "time" : (end - start) / 1000
         }
 
@@ -65,6 +65,75 @@ const createMysqlStructure = async () => {
     }
 }
 
+const insertPersons = async (arrayPerson) => {
+    const batchSize = 10000;
+    let insertIndex = 0;
+    let duration = 0;
+
+    while (insertIndex < arrayPerson.size()) {
+
+        // create batch
+        var request = `INSERT INTO person (firstname, lastname) VALUES`;
+        let nbPersonToInsert = arrayPerson.size() - insertIndex;
+        let maxVal = nbPersonToInsert < batchSize ? nbPersonToInsert : batchSize;
+        for (let i = 0; i < maxVal - 1 ; i++) {
+            let person = arrayPerson[insertIndex];
+
+            request += `("`+ person.firstName + `", "`+ person.lastName +`"),`;
+
+            insertIndex++;
+        }
+        request += `("`+ arrayPerson[insertIndex] + `", "`+ arrayPerson[insertIndex] +`");`;
+        insertIndex++;
+
+        let result = executeQuery();
+
+        if (result.status === '500') {
+            return result;
+        }
+        duration += result.time;
+    }
+
+}
+
+const executeQuery = async (query) => {
+    try {
+        let start = Date.now();
+        let result = await sequelize.query(query);
+        let end = Date.now();
+        let dureeExec = (end - start) / 1000;
+
+        return {
+            'status': '200',
+            'query': result,
+            'time': dureeExec
+        }
+    } catch (error) {
+        throw {
+            "status" : '500',
+            "data" : error,
+            "time" : null
+        }
+    }
+
+}
+
+const insertProducts = async () => {
+
+}
+
+const insertRelationship = async () => {
+
+}
+
+const insertPurchase = async () => {
+
+}
+
 export default {
-    createMysqlStructure
+      createMysqlStructure,
+      insertPersons,
+      insertProducts,
+      insertRelationship,
+      insertPurchase
 }
