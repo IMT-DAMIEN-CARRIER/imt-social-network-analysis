@@ -1,7 +1,7 @@
-import Person from '../entity/Person';
-import Product from "../entity/Product";
+const Person = require('../entity/Person');
+const Product = require("../entity/Product");
 
-import faker from '@faker-js/faker';
+const faker = require('@faker-js/faker');
 
 const generatePersonData = (nbPerson) => {
   let tabPersons = [];
@@ -87,7 +87,7 @@ const generateProductsRelationsData = (tabPersons, tabProducts) => {
   return relationTab;
 }
 
-export default {
+module.exports = {
   generatePersonData,
   generateRelationsData,
   generateProductsData,

@@ -3,4 +3,4 @@ const Person = (firstName, lastName) => {
     this.lastName = lastName;
 }
 
-export default Person;
+module.exports = Person;

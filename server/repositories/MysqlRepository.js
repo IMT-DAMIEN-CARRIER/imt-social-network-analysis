@@ -19,7 +19,7 @@ const createMysqlStructure = async () => {
             CONSTRAINT fk_id_person_following FOREIGN KEY (id_person_following) REFERENCES person(id),
             CONSTRAINT fk_id_person_followed FOREIGN KEY (id_person_followed) REFERENCES person(id),
             CONSTRAINT pk_relationship PRIMARY KEY (id_person_following, id_person_followed)
-        )ENGINE InnoDB;
+        ) ENGINE InnoDB;
     `
 
     const product = `
@@ -27,7 +27,7 @@ const createMysqlStructure = async () => {
             id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
             productName VARCHAR(8) NOT NULL,
             price INT NOT NULL
-        )ENGINE InnoDB;
+        ) ENGINE InnoDB;
     `
 
     const order = `
@@ -37,7 +37,7 @@ const createMysqlStructure = async () => {
             CONSTRAINT fk_id_person FOREIGN KEY (id_person) REFERENCES person(id),
             CONSTRAINT fk_id_product FOREIGN KEY (id_product) REFERENCES product(id),
             CONSTRAINT pk_purchase PRIMARY KEY (id_person, id_product)
-        )ENGINE InnoDB;
+        ) ENGINE InnoDB;
     `
 
     try {
@@ -71,11 +71,11 @@ const insertPersons = async (arrayPerson) => {
     let duration = 0;
 
     while (insertIndex < arrayPerson.size()) {
-
         // create batch
-        var request = `INSERT INTO person (firstname, lastname) VALUES`;
-        let nbPersonToInsert = arrayPerson.size() - insertIndex;
-        let maxVal = nbPersonToInsert < batchSize ? nbPersonToInsert : batchSize;
+        let request = `INSERT INTO person (firstname, lastname) VALUES`;
+        const nbPersonToInsert = arrayPerson.size() - insertIndex;
+        const maxVal = nbPersonToInsert < batchSize ? nbPersonToInsert : batchSize;
+
         for (let i = 0; i < maxVal - 1 ; i++) {
             let person = arrayPerson[insertIndex];
 
@@ -83,25 +83,28 @@ const insertPersons = async (arrayPerson) => {
 
             insertIndex++;
         }
+
         request += `("`+ arrayPerson[insertIndex] + `", "`+ arrayPerson[insertIndex] +`");`;
         insertIndex++;
 
-        let result = executeQuery();
+        const result = executeQuery();
 
         if (result.status === '500') {
             return result;
         }
+
         duration += result.time;
     }
 
+    return duration;
 }
 
 const executeQuery = async (query) => {
     try {
-        let start = Date.now();
-        let result = await sequelize.query(query);
-        let end = Date.now();
-        let dureeExec = (end - start) / 1000;
+        const start = Date.now();
+        const result = await sequelize.query(query);
+        const end = Date.now();
+        const dureeExec = (end - start) / 1000;
 
         return {
             'status': '200',
@@ -130,7 +133,7 @@ const insertPurchase = async () => {
 
 }
 
-export default {
+module.exports = {
       createMysqlStructure,
       insertPersons,
       insertProducts,

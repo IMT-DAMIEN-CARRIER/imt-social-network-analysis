@@ -1,6 +1,7 @@
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const express = require('express');
+const personMySqlroute = require('../routes/MysqlRoutes/personMySqlRoute');
 
 require("dotenv").config();
 
@@ -14,3 +15,9 @@ const port = process.env.PORT || 5050;
 app.listen(port, () => {
     console.log(`Server start on port ${port}`);
 });
+
+app.get('/', (req, res) => {
+    res.send('Hello world !');
+});
+
+app.use('/mysql', personMySqlroute)

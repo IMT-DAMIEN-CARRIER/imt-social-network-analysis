@@ -1,13 +1,23 @@
-import DataGenerationService from "./DataGenerationService";
-import MysqlRepository from "../repositories/MysqlRepository";
+const DataGenerationService =  require("./DataGenerationService");
+const MysqlRepository = require("../repositories/MysqlRepository");
 
-const generateData = (nbPerson) => {
-    let tabPersons = DataGenerationService.generatePersonData(nbPerson);
-    MysqlRepository.insertPersons();
-    return tabPersons;
+const generateData = () => {
+    const tabPersons = DataGenerationService.generatePersonData(10000);
+    const durationInsertPerson = MysqlRepository.insertPersons(tabPersons);
+
+    return {
+        'durationInsertPerson': durationInsertPerson
+    };
+}
+
+const generatePerson = (nbPerson, nbProduct) => {
+    const tabPersons = DataGenerationService.generatePersonData(nbPerson);
+
+    return MysqlRepository.insertPersons(tabPersons);
 }
 
 
-export default {
-    generateData
+module.exports = {
+    generateData,
+    generatePerson
 }
