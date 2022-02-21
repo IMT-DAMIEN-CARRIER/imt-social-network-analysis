@@ -65,6 +65,6 @@ const createMysqlStructure = async () => {
     }
 }
 
-module.exports = {
+export default {
     createMysqlStructure
 }
