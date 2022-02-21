@@ -1,18 +1,21 @@
 const express = require('express')
-const generatePerson = require("../../services/PersonService");
+const generatePerson = require('../../services/PersonService');
+const {createMysqlStructure} = require('../../repositories/MysqlRepository');
 const router = express.Router();
 
 /**
- * /mysql/generate
+ * /mysql/person/generate
  *
  * Génère la structure de BDD.
  */
-router.post('/generate', async (req, res) => {
-
+router.get('/person/generate', async (req, res) => {
+    createMysqlStructure().then((response) => {
+        res.json({res: response});
+    });
 });
 
 /**
- * /mysql/perso/add/{nbPerso}
+ * /mysql/person/add/{nbPerso}
  *
  * {
  *   nbPerson: <nbPerson>
@@ -21,15 +24,7 @@ router.post('/generate', async (req, res) => {
  * Ajoute en base la personne renseignée
  */
 router.post('/person/add/:nbPerso', async (req, res) => {
-    const { nbPerson } = req.body;
 
-    if (nbPerson) {
-        const duration = generatePerson(nbPerson);
-
-        res.json({ok: true, duration})
-    } else {
-        res.send("Il y a une erreur dans le paramètres envoyés.");
-    }
 });
 
 

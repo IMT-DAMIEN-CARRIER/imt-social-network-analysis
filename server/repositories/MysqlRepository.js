@@ -1,6 +1,10 @@
-const { Sequelize } = require('sequelize');
-const sequelize = new Sequelize(process.env.MYSQL_DATABASE_ADRESS,{
-    logging: false
+const mariadb = require('mariadb');
+const pool = mariadb.createPool({
+    host: '127.0.0.1',
+    user:'root',
+    password: 'root',
+    port: 3306,
+    database: 'projet_nosql'
 });
 
 const createMysqlStructure = async () => {
@@ -12,7 +16,7 @@ const createMysqlStructure = async () => {
         ) ENGINE InnoDB;
     `;
 
-    var relation = `
+    const relation = `
         CREATE TABLE IF NOT EXISTS relation (
             id_person_following INT NOT NULL,
             id_person_followed INT NOT NULL,
@@ -31,7 +35,7 @@ const createMysqlStructure = async () => {
     `
 
     const order = `
-        CREATE TABLE IF NOT EXISTS order (
+        CREATE TABLE IF NOT EXISTS orders (
             id_person INT NOT NULL,
             id_product INT NOT NULL,
             CONSTRAINT fk_id_person FOREIGN KEY (id_person) REFERENCES person(id),
@@ -40,13 +44,16 @@ const createMysqlStructure = async () => {
         ) ENGINE InnoDB;
     `
 
+    let connexion;
+
     try {
+        connexion = await pool.getConnection();
         const start = Date.now();
 
-        await sequelize.query(person)
-        await sequelize.query(relation)
-        await sequelize.query(product)
-        await sequelize.query(order)
+        await connexion.query(person);
+        await connexion.query(relation);
+        await connexion.query(product);
+        await connexion.query(order);
 
         const end = Date.now();
 
@@ -55,13 +62,14 @@ const createMysqlStructure = async () => {
             "data" : "done",
             "time" : (end - start) / 1000
         }
-
     } catch (error) {
-        throw {
+        return {
             "status" : 409,
             "data" : error,
             "time" : null
         }
+    } finally {
+        if (connexion) await connexion.end();
     }
 }
 
@@ -100,9 +108,12 @@ const insertPersons = async (arrayPerson) => {
 }
 
 const executeQuery = async (query) => {
+    let connexion;
+
     try {
+        connexion = await pool.getConnection();
         const start = Date.now();
-        const result = await sequelize.query(query);
+        const result = await connexion.query(query);
         const end = Date.now();
         const dureeExec = (end - start) / 1000;
 
@@ -112,13 +123,14 @@ const executeQuery = async (query) => {
             'time': dureeExec
         }
     } catch (error) {
-        throw {
+        return {
             "status" : '500',
             "data" : error,
             "time" : null
         }
+    } finally {
+        if (connexion) await connexion.end();
     }
-
 }
 
 const insertProducts = async () => {
@@ -134,9 +146,9 @@ const insertPurchase = async () => {
 }
 
 module.exports = {
-      createMysqlStructure,
-      insertPersons,
-      insertProducts,
-      insertRelationship,
-      insertPurchase
+    createMysqlStructure,
+    insertPersons,
+    insertProducts,
+    insertRelationship,
+    insertPurchase
 }
