@@ -64,3 +64,7 @@ const createMysqlStructure = async () => {
         }
     }
 }
+
+module.exports = {
+    createMysqlStructure
+}
