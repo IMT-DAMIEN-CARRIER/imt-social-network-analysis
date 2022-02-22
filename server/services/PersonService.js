@@ -28,10 +28,27 @@ const generatePersonMysql = (nbPerson) => {
   return MysqlRepository.insertPersons(tabPersons);
 }
 
-const generatePersonNeo4j = (nbPerson) => {
+const generatePersonNeo4j = async (nbPerson) => {
   const tabPersons = DataGenerationService.generatePersonData(nbPerson);
+  const tabRelations = DataGenerationService.generateRelationsData(nbPerson);
 
-  return Neo4jRepository.insertPersons(tabPersons);
+  const map = new Map();
+  tabRelations.forEach((item) => {
+    if (map.has(item.follower)) {
+      let element = map.get(item.follower);
+      element.push(item.followed);
+    } else {
+      map.set(item.follower, [item.followed]);
+    }
+  });
+
+  const resultInsertPersons = await Neo4jRepository.insertPersons(tabPersons);
+  const resultInsertRelations = await Neo4jRepository.insertRelations(map);
+
+  return {
+    resultInsertPersons,
+    resultInsertRelations
+  };
 }
 
 
