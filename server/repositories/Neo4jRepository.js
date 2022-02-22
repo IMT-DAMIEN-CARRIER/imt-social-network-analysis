@@ -58,16 +58,15 @@ const insertPersons = async function (arrayPerson) {
         });
 
         const endTimeCreationPersons = Date.now();
+        session.run('CREATE CONSTRAINT constraint_id_person IF NOT EXISTS FOR (p:Person) REQUIRE p.id IS UNIQUE');
         session.run('CREATE INDEX person_id_index IF NOT EXISTS FOR (p:Person) ON (p.id)');
 
         await session.writeTransaction((tx) => {
             tx.run(
-                `WITH range(0,20) as followersRange
-              MATCH (f:Person)
-              WITH DISTINCT collect(f) as followers, followersRange
-              MATCH (i:Person)
-              WITH i, apoc.coll.randomItems(followers, apoc.coll.randomItem(followersRange)) as followers
-              FOREACH (follower in followers | CREATE (follower)-[:Relation]->(i))
+                `
+MATCH (f:Person) WITH DISTINCT collect(f) as followers, range(0,20) as followersRange
+MATCH (i:Person) WITH i, apoc.coll.randomItems(followers, apoc.coll.randomItem(followersRange)) as followers
+FOREACH (follower in followers | CREATE (follower)-[:Relation]->(i))
             `);
 
             startTimeCreationRelations = Date.now();
@@ -76,6 +75,7 @@ const insertPersons = async function (arrayPerson) {
         const endTimeCreationRelations = Date.now();
 
         session.run('DROP INDEX person_id_index IF EXISTS');
+        session.run('DROP CONSTRAINT constraint_id_person IF EXISTS');
         await session.close();
 
         const timeCreationPersons = endTimeCreationPersons - startTimeCreationPersons;
