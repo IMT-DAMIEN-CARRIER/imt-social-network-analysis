@@ -1,4 +1,4 @@
-const Product = (productName, price) => {
+function Product(productName, price) {
     this.productName = productName;
     this.price = price;
 }

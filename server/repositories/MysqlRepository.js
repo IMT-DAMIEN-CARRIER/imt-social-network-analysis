@@ -11,8 +11,8 @@ const createMysqlStructure = async () => {
     const person = `
         CREATE TABLE IF NOT EXISTS person (
             id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-            firstname VARCHAR(8) NOT NULL,
-            lastname VARCHAR(8) NOT NULL
+            firstname VARCHAR(255) NOT NULL,
+            lastname VARCHAR(255) NOT NULL
         ) ENGINE InnoDB;
     `;
 
@@ -29,7 +29,7 @@ const createMysqlStructure = async () => {
     const product = `
         CREATE TABLE IF NOT EXISTS product (
             id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
-            productName VARCHAR(8) NOT NULL,
+            productName VARCHAR(255) NOT NULL,
             price INT NOT NULL
         ) ENGINE InnoDB;
     `
@@ -74,14 +74,14 @@ const createMysqlStructure = async () => {
 }
 
 const insertPersons = async (arrayPerson) => {
-    const batchSize = 10000;
+    const batchSize = 100000;
     let insertIndex = 0;
     let duration = 0;
 
-    while (insertIndex < arrayPerson.size()) {
+    while (insertIndex < arrayPerson.length) {
         // create batch
         let request = `INSERT INTO person (firstname, lastname) VALUES`;
-        const nbPersonToInsert = arrayPerson.size() - insertIndex;
+        const nbPersonToInsert = arrayPerson.length - insertIndex;
         const maxVal = nbPersonToInsert < batchSize ? nbPersonToInsert : batchSize;
 
         for (let i = 0; i < maxVal - 1 ; i++) {
@@ -95,7 +95,7 @@ const insertPersons = async (arrayPerson) => {
         request += `("`+ arrayPerson[insertIndex] + `", "`+ arrayPerson[insertIndex] +`");`;
         insertIndex++;
 
-        const result = executeQuery();
+        const result = await executeQuery(request);
 
         if (result.status === '500') {
             return result;
@@ -104,7 +104,7 @@ const insertPersons = async (arrayPerson) => {
         duration += result.time;
     }
 
-    return duration;
+    return {status: '200', 'time': duration};
 }
 
 const executeQuery = async (query) => {
