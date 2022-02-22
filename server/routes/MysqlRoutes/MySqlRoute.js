@@ -1,6 +1,5 @@
-const express = require('express')
-const generatePerson = require('../../services/PersonService');
-const {createMysqlStructure} = require('../../repositories/MysqlRepository');
+const express = require('express');
+const { createMysqlStructure } = require('../../repositories/MysqlRepository');
 const router = express.Router();
 
 /**

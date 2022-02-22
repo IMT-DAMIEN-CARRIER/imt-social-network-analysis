@@ -1,4 +1,4 @@
-const neo4j = require("neo4j-driver");
+const neo4j = require('neo4j-driver');
 
 const driver = neo4j.driver(
     "neo4j://" +
@@ -12,3 +12,19 @@ const driver = neo4j.driver(
 );
 
 const session = driver.session();
+
+const getAllDatas = async () => {
+    session
+        .run('Match(n) RETURN n')
+        .then(function (result) {
+            console.log(result.records);
+            session.close();
+        })
+        .catch((error) => {
+            console.error(error);
+        });
+};
+
+module.exports = {
+    getAllDatas
+}
