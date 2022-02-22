@@ -10,7 +10,7 @@ const generateData = () => {
     };
 }
 
-const generatePerson = (nbPerson, nbProduct) => {
+const generatePerson = (nbPerson) => {
     const tabPersons = DataGenerationService.generatePersonData(nbPerson);
 
     return MysqlRepository.insertPersons(tabPersons);

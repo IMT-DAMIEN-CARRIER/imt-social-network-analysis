@@ -1,4 +1,4 @@
-const Person = (firstName, lastName) => {
+function Person(firstName, lastName) {
     this.firstName = firstName;
     this.lastName = lastName;
 }

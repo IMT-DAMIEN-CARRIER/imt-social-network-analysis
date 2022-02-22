@@ -1,7 +1,7 @@
 const Person = require('../entity/Person');
 const Product = require("../entity/Product");
 
-const faker = require('@faker-js/faker');
+const { faker } = require('@faker-js/faker');
 
 const generatePersonData = (nbPerson) => {
   let tabPersons = [];
