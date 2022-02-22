@@ -12,6 +12,8 @@ services:
             MYSQL_ROOT_PASSWORD: root
         ports:
             - '3306:3306'
+        volumes:
+            - ./mariadb_database/:/var/lib/mysql/
 
     # Neo4j database
     neo4j:
@@ -26,6 +28,8 @@ services:
             - NEO4J_apoc_import_file_use__neo4j__config=true
             - NEO4J_apoc_export_file_enabled=true
             - NEO4JLABS_PLUGINS=["apoc"]
+        volumes:
+            - ./neo4j_database/:/data/
 
     # phpMyAdmin for MariaDB
     phpmyadmin:
