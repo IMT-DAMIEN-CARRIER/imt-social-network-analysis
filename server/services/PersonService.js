@@ -2,32 +2,41 @@ const DataGenerationService = require('./DataGenerationService');
 const MysqlRepository = require('../repositories/MysqlRepository');
 const Neo4jRepository = require('../repositories/Neo4jRepository');
 
-const generateData = () => {
-    const tabPersons = DataGenerationService.generatePersonData(1000000);
-    const resultsMysql = MysqlRepository.insertPersons(tabPersons);
-    const resultsNosql = Neo4jRepository.insertPersons(tabPersons);
+const generateData = async () => {
+  const initNbPerson = 100000;
 
-    return {
-        'insertion_mysql_results': resultsMysql,
-        'insertion_nosql_results': resultsNosql
-    };
+  const tabPersons = DataGenerationService.generatePersonData(initNbPerson);
+  const durationInsertPerson = await MysqlRepository.insertPersons(tabPersons);
+  const resultsNosql = Neo4jRepository.insertPersons(tabPersons);
+
+  const request = await MysqlRepository.getPersonMaxId();
+
+  const tabRelations = DataGenerationService.generateRelationsData(parseInt(request.query[0]['id']));
+
+  const durationInsertRelations = await MysqlRepository.insertRelations(tabRelations);
+
+  return {
+    'durationInsertPersonMysql': durationInsertPerson,
+    'durationInsertRelationsMysql': durationInsertRelations,
+    'durationInsertPersoNeo4J': resultsNosql
+  };
 }
 
 const generatePersonMysql = (nbPerson) => {
-    const tabPersons = DataGenerationService.generatePersonData(nbPerson);
+  const tabPersons = DataGenerationService.generatePersonData(nbPerson);
 
-    return MysqlRepository.insertPersons(tabPersons);
+  return MysqlRepository.insertPersons(tabPersons);
 }
 
 const generatePersonNeo4j = (nbPerson) => {
-    const tabPersons = DataGenerationService.generatePersonData(nbPerson);
+  const tabPersons = DataGenerationService.generatePersonData(nbPerson);
 
-    return Neo4jRepository.insertPersons(tabPersons);
+  return Neo4jRepository.insertPersons(tabPersons);
 }
 
 
 module.exports = {
-    generateData,
-    generatePersonMysql,
-    generatePersonNeo4j
+  generateData,
+  generatePersonMysql,
+  generatePersonNeo4j
 }
