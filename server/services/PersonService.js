@@ -26,10 +26,9 @@ const generatePersonMysql = (nbPerson) => {
 }
 
 const generatePersonNeo4j = async (nbPerson) => {
-  const tabPersons = DataGenerationService.generatePersonData(nbPerson);
-
-  const resultInsertPersons = await Neo4jRepository.insertPersons(tabPersons);
-  const resultInsertRelations = await Neo4jRepository.insertRelations(nbPerson);
+    const tabPersons = DataGenerationService.generatePersonData(nbPerson);
+    const resultInsertPersons = await Neo4jRepository.insertPersons(tabPersons);
+    const resultInsertRelations = await Neo4jRepository.insertRelations(nbPerson);
 
     return {
         resultInsertPersons,
