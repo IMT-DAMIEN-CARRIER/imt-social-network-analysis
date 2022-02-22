@@ -1,5 +1,5 @@
 const express = require('express')
-const {generatePersonMysql} = require('../../services/PersonService');
+const {generatePersonMysql, generateData} = require('../../services/PersonService');
 const {createMysqlStructure} = require('../../repositories/MysqlRepository');
 const router = express.Router();
 
@@ -9,9 +9,9 @@ const router = express.Router();
  * Génère la structure de BDD.
  */
 router.get('/person/generate', async (req, res) => {
-    createMysqlStructure().then((response) => {
-        res.json({res: response});
-    });
+  createMysqlStructure().then((response) => {
+    res.json({res: response});
+  });
 });
 
 /**
@@ -31,5 +31,10 @@ router.post('/person/add/', async (req, res) => {
     });
 });
 
+router.post('/test', async (req, res) => {
 
+    generateData().then((response) => {
+        res.json({response});
+    });
+});
 module.exports = router;

@@ -1,7 +1,7 @@
 const Person = require('../entity/Person');
 const Product = require("../entity/Product");
 
-const { faker } = require('@faker-js/faker');
+const {faker} = require('@faker-js/faker');
 
 const generatePersonData = (nbPerson) => {
   let tabPersons = [];
@@ -17,33 +17,31 @@ const generatePersonData = (nbPerson) => {
   return tabPersons;
 }
 
-const generateRelationsData = (allPersons) => {
+const generateRelationsData = (maxId) => {
   const nbRelationMax = 20;
   let relations = [];
 
-  allPersons.forEach(person => {
-    let idAlreadyUsed = []
+  for (let idPerson = 1; idPerson <= maxId; idPerson++) {
+    let idAlreadyUsed = [];
     const nbCurrentRelations = Math.floor(Math.random() * (nbRelationMax + 1));
 
     for (let i = 0; i < nbCurrentRelations; i++) {
-      let randomPerson = allPersons[Math.floor(Math.random() * allPersons.length)];
+      let randomId;
+      do {
+        randomId = Math.floor(Math.random() * maxId + 1);
+      } while (idAlreadyUsed.includes(randomId) || randomId === idPerson);
 
-      while (idAlreadyUsed.includes(randomPerson.id)) {
-        randomPerson = allPersons[Math.floor(Math.random() * allPersons.length)];
-      }
-
-      idAlreadyUsed.push(randomPerson.id)
+      idAlreadyUsed.push(randomId);
 
       relations.push({
-        "id_person_following" : person.id,
-        "id_person_followed" : randomPerson.id
-      })
+        "follower": idPerson,
+        "followed": randomId
+      });
     }
-  });
+  }
 
   return relations;
 }
-
 
 const generateProductsData = (nbProducts) => {
   let tabProduct = []
@@ -51,7 +49,7 @@ const generateProductsData = (nbProducts) => {
   for (let i = 0; i < nbProducts; i++) {
     const productName = faker.commerce.productName();
     const price = faker.commerce.price()
-    const currentPerson = new Product(i, productName, price);
+    const currentPerson = new Product(productName, price);
 
     tabProduct.push(currentPerson);
   }
@@ -61,26 +59,25 @@ const generateProductsData = (nbProducts) => {
 
 const generateProductsRelationsData = (tabPersons, tabProducts) => {
   let relationTab = [];
-  const nbRelationsMax = 5
+  const nbRelationsMax = 5;
 
   tabPersons.forEach(person => {
     let idAlreadyUsed = []
     const nbCurrentRelations = Math.floor(Math.random() * (nbRelationsMax + 1));
 
     for (let i = 0; i < nbCurrentRelations; i++) {
-      let randomProduct = tabProducts[Math.floor(Math.random() * tabProducts.length)];
 
-      while (idAlreadyUsed.includes(randomProduct.id)) {
+      let randomProduct;
+      do {
         randomProduct = tabProducts[Math.floor(Math.random() * tabProducts.length)];
-      }
+      } while (idAlreadyUsed.includes(randomProduct.id));
 
       idAlreadyUsed.push(randomProduct.id)
 
       relationTab.push({
-        "id_person" : person.id,
-        "id_product" : randomProduct.id
+        "person": person.id,
+        "product": randomProduct.id
       })
-
     }
   });
 
