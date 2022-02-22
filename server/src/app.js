@@ -1,8 +1,8 @@
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const express = require('express');
-const personMySqlRoute = require('../routes/MysqlRoutes/MySqlRoute');
-const personNeo4jRoutes = require('../routes/Neo4jRoutes/Neo4jRoutes');
+const mySqlRoutes = require('../routes/MysqlRoutes/MySqlRoute');
+const neo4jRoutes = require('../routes/Neo4jRoutes/Neo4jRoutes');
 
 require("dotenv").config();
 
@@ -21,5 +21,5 @@ app.get('/', (req, res) => {
     res.send('Hello world !');
 });
 
-app.use('/mysql', personMySqlRoute);
-app.use('/neo4j', personNeo4jRoutes);
+app.use('/mysql', mySqlRoutes);
+app.use('/neo4j', neo4jRoutes);
