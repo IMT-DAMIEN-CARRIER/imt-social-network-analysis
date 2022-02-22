@@ -9,9 +9,9 @@ const router = express.Router();
  * Génère la structure de BDD.
  */
 router.get('/person/generate', async (req, res) => {
-  createMysqlStructure().then((response) => {
-    res.json({res: response});
-  });
+    createMysqlStructure().then((response) => {
+        res.json({res: response});
+    });
 });
 
 /**
