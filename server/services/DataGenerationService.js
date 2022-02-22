@@ -4,89 +4,89 @@ const Product = require("../entity/Product");
 const {faker} = require('@faker-js/faker');
 
 const generatePersonData = (nbPerson) => {
-  let tabPersons = [];
+    let tabPersons = [];
 
-  for (let i = 0; i < nbPerson; i++) {
-    const firstname = faker.name.firstName();
-    const lastname = faker.name.lastName();
-    const currentPerson = new Person(firstname, lastname);
+    for (let i = 0; i < nbPerson; i++) {
+        const firstname = faker.name.firstName();
+        const lastname = faker.name.lastName();
+        const currentPerson = new Person(firstname, lastname);
 
-    tabPersons.push(currentPerson);
-  }
+        tabPersons.push(currentPerson);
+    }
 
-  return tabPersons;
+    return tabPersons;
 }
 
 const generateRelationsData = (maxId) => {
-  const nbRelationMax = 20;
-  let relations = [];
+    const nbRelationMax = 20;
+    let relations = [];
 
-  for (let idPerson = 1; idPerson <= maxId; idPerson++) {
-    let idAlreadyUsed = [];
-    const nbCurrentRelations = Math.floor(Math.random() * (nbRelationMax + 1));
+    for (let idPerson = 1; idPerson <= maxId; idPerson++) {
+        let idAlreadyUsed = [];
+        const nbCurrentRelations = Math.floor(Math.random() * (nbRelationMax + 1));
 
-    for (let i = 0; i < nbCurrentRelations; i++) {
-      let randomId;
-      do {
-        randomId = Math.floor(Math.random() * maxId + 1);
-      } while (idAlreadyUsed.includes(randomId) || randomId === idPerson);
+        for (let i = 0; i < nbCurrentRelations; i++) {
+            let randomId;
+            do {
+                randomId = Math.floor(Math.random() * maxId + 1);
+            } while (idAlreadyUsed.includes(randomId) || randomId === idPerson);
 
-      idAlreadyUsed.push(randomId);
+            idAlreadyUsed.push(randomId);
 
-      relations.push({
-        "follower": idPerson,
-        "followed": randomId
-      });
+            relations.push({
+                "follower": idPerson,
+                "followed": randomId
+            });
+        }
     }
-  }
 
-  return relations;
+    return relations;
 }
 
 const generateProductsData = (nbProducts) => {
-  let tabProduct = []
+    let tabProduct = []
 
-  for (let i = 0; i < nbProducts; i++) {
-    const productName = faker.commerce.productName();
-    const price = faker.commerce.price()
-    const currentPerson = new Product(productName, price);
+    for (let i = 0; i < nbProducts; i++) {
+        const productName = faker.commerce.productName();
+        const price = faker.commerce.price()
+        const currentPerson = new Product(productName, price);
 
-    tabProduct.push(currentPerson);
-  }
+        tabProduct.push(currentPerson);
+    }
 
-  return tabProduct;
+    return tabProduct;
 }
 
 const generateProductsRelationsData = (tabPersons, tabProducts) => {
-  let relationTab = [];
-  const nbRelationsMax = 5;
+    let relationTab = [];
+    const nbRelationsMax = 5;
 
-  tabPersons.forEach(person => {
-    let idAlreadyUsed = []
-    const nbCurrentRelations = Math.floor(Math.random() * (nbRelationsMax + 1));
+    tabPersons.forEach(person => {
+        let idAlreadyUsed = []
+        const nbCurrentRelations = Math.floor(Math.random() * (nbRelationsMax + 1));
 
-    for (let i = 0; i < nbCurrentRelations; i++) {
+        for (let i = 0; i < nbCurrentRelations; i++) {
+            let randomProduct;
 
-      let randomProduct;
-      do {
-        randomProduct = tabProducts[Math.floor(Math.random() * tabProducts.length)];
-      } while (idAlreadyUsed.includes(randomProduct.id));
+            do {
+                randomProduct = tabProducts[Math.floor(Math.random() * tabProducts.length)];
+            } while (idAlreadyUsed.includes(randomProduct.id));
 
-      idAlreadyUsed.push(randomProduct.id)
+            idAlreadyUsed.push(randomProduct.id)
 
-      relationTab.push({
-        "person": person.id,
-        "product": randomProduct.id
-      })
-    }
-  });
+            relationTab.push({
+                "person": person.id,
+                "product": randomProduct.id
+            })
+        }
+    });
 
-  return relationTab;
+    return relationTab;
 }
 
 module.exports = {
-  generatePersonData,
-  generateRelationsData,
-  generateProductsData,
-  generateProductsRelationsData
+    generatePersonData,
+    generateRelationsData,
+    generateProductsData,
+    generateProductsRelationsData
 }

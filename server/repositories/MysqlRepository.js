@@ -1,14 +1,14 @@
 const mariadb = require('mariadb');
 const pool = mariadb.createPool({
-  host: '127.0.0.1',
-  user: 'root',
-  password: 'root',
-  port: 3306,
-  database: 'projet_nosql'
+    host: '127.0.0.1',
+    user: 'root',
+    password: 'root',
+    port: 3306,
+    database: 'projet_nosql'
 });
 
 const createMysqlStructure = async () => {
-  const person = `
+    const person = `
         CREATE TABLE IF NOT EXISTS person (
             id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
             firstname VARCHAR(255) NOT NULL,
@@ -16,7 +16,7 @@ const createMysqlStructure = async () => {
         ) ENGINE InnoDB;
     `;
 
-  const relation = `
+    const relation = `
         CREATE TABLE IF NOT EXISTS relation (
             id_person_following INT NOT NULL,
             id_person_followed INT NOT NULL,
@@ -26,7 +26,7 @@ const createMysqlStructure = async () => {
         ) ENGINE InnoDB;
     `
 
-  const product = `
+    const product = `
         CREATE TABLE IF NOT EXISTS product (
             id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
             productName VARCHAR(255) NOT NULL,
@@ -34,7 +34,7 @@ const createMysqlStructure = async () => {
         ) ENGINE InnoDB;
     `
 
-  const order = `
+    const order = `
         CREATE TABLE IF NOT EXISTS orders (
             id_person INT NOT NULL,
             id_product INT NOT NULL,
@@ -44,138 +44,139 @@ const createMysqlStructure = async () => {
         ) ENGINE InnoDB;
     `
 
-  let connexion;
+    let connexion;
 
-  try {
-    connexion = await pool.getConnection();
-    const start = Date.now();
+    try {
+        connexion = await pool.getConnection();
+        const start = Date.now();
 
-    await connexion.query(person);
-    await connexion.query(relation);
-    await connexion.query(product);
-    await connexion.query(order);
+        await connexion.query(person);
+        await connexion.query(relation);
+        await connexion.query(product);
+        await connexion.query(order);
 
-    const end = Date.now();
+        const end = Date.now();
 
-    return {
-      "status": 200,
-      "data": "done",
-      "time": (end - start) / 1000
+        return {
+            "status": 200,
+            "data": "done",
+            "time": (end - start) / 1000
+        }
+    } catch (error) {
+        return {
+            "status": 409,
+            "data": error,
+            "time": null
+        }
+    } finally {
+        if (connexion) await connexion.end();
     }
-  } catch (error) {
-    return {
-      "status": 409,
-      "data": error,
-      "time": null
-    }
-  } finally {
-    if (connexion) await connexion.end();
-  }
 }
 
 const getPersonMaxId = async () => {
-  const request = `SELECT MAX(id) as id FROM person;`;
+    const request = `SELECT MAX(id) as id FROM person;`;
 
-  return await executeQuery(request);
+    return await executeQuery(request);
 }
 
 const getProductMaxId = async () => {
-  const request = `SELECT MAX(id) as id FROM product;`;
-  return result.query.id = await executeQuery(request);
+    const request = `SELECT MAX(id) as id FROM product;`;
+
+    return result.query.id = await executeQuery(request);
 }
 
 const insertPersons = async (arrayPerson) => {
-  const batchSize = 100000;
-  let insertIndex = 0;
-  let duration = 0;
+    const batchSize = 100000;
+    let insertIndex = 0;
+    let duration = 0;
 
-  while (insertIndex < arrayPerson.length) {
-    // create batch
-    let request = `INSERT INTO person (firstname, lastname) VALUES`;
-    const nbPersonToInsert = arrayPerson.length - insertIndex;
-    const maxVal = nbPersonToInsert < batchSize ? nbPersonToInsert : batchSize;
+    while (insertIndex < arrayPerson.length) {
+        // create batch
+        let request = `INSERT INTO person (firstname, lastname) VALUES`;
+        const nbPersonToInsert = arrayPerson.length - insertIndex;
+        const maxVal = nbPersonToInsert < batchSize ? nbPersonToInsert : batchSize;
 
-    for (let i = 0; i < maxVal - 1; i++) {
-      let person = arrayPerson[insertIndex];
+        for (let i = 0; i < maxVal - 1; i++) {
+            let person = arrayPerson[insertIndex];
 
-      request += `("` + person.firstName + `", "` + person.lastName + `"),`;
+            request += `("` + person.firstName + `", "` + person.lastName + `"),`;
 
-      insertIndex++;
+            insertIndex++;
+        }
+
+        request += `("` + arrayPerson[insertIndex].firstName + `", "` + arrayPerson[insertIndex].lastName + `");`;
+        insertIndex++;
+
+        const result = await executeQuery(request);
+
+        if (result.status === '500') {
+            return result;
+        }
+
+        duration += result.time;
     }
 
-    request += `("` + arrayPerson[insertIndex].firstName + `", "` + arrayPerson[insertIndex].lastName + `");`;
-    insertIndex++;
-
-    const result = await executeQuery(request);
-
-    if (result.status === '500') {
-      return result;
-    }
-
-    duration += result.time;
-  }
-
-  return {status: '200', 'time': duration};
+    return {status: '200', 'time': duration};
 }
 
 const insertRelations = async (arrayRelations) => {
-  const batchSize = 100000;
-  let insertIndex = 0;
-  let duration = 0;
+    const batchSize = 100000;
+    let insertIndex = 0;
+    let duration = 0;
 
-  while (insertIndex < arrayRelations.length) {
-    // create batch
-    let request = `INSERT INTO relation (id_person_following, id_person_followed) VALUES`;
-    const nbRelationToInsert = arrayRelations.length - insertIndex;
-    const maxVal = nbRelationToInsert < batchSize ? nbRelationToInsert : batchSize;
+    while (insertIndex < arrayRelations.length) {
+        // create batch
+        let request = `INSERT INTO relation (id_person_following, id_person_followed) VALUES`;
+        const nbRelationToInsert = arrayRelations.length - insertIndex;
+        const maxVal = nbRelationToInsert < batchSize ? nbRelationToInsert : batchSize;
 
-    for (let i = 0; i < maxVal - 1; i++) {
-      let relation = arrayRelations[insertIndex];
+        for (let i = 0; i < maxVal - 1; i++) {
+            let relation = arrayRelations[insertIndex];
 
-      request += `(` + relation.follower + `, ` + relation.followed + `),`;
+            request += `(` + relation.follower + `, ` + relation.followed + `),`;
 
-      insertIndex++;
+            insertIndex++;
+        }
+
+        request += `(` + arrayRelations[insertIndex].follower + `, ` + arrayRelations[insertIndex].followed + `);`;
+        insertIndex++;
+
+        const result = await executeQuery(request);
+
+        if (result.status === '500') {
+            return result;
+        }
+
+        duration += result.time;
     }
 
-    request += `(` + arrayRelations[insertIndex].follower + `, ` + arrayRelations[insertIndex].followed + `);`;
-    insertIndex++;
-
-    const result = await executeQuery(request);
-
-    if (result.status === '500') {
-      return result;
-    }
-
-    duration += result.time;
-  }
-
-  return {status: '200', 'time': duration};
+    return {status: '200', 'time': duration};
 }
 
 const executeQuery = async (query) => {
-  let connexion;
+    let connexion;
 
-  try {
-    connexion = await pool.getConnection();
-    const start = Date.now();
-    const result = await connexion.query(query);
-    const end = Date.now();
-    const dureeExec = (end - start) / 1000;
+    try {
+        connexion = await pool.getConnection();
+        const start = Date.now();
+        const result = await connexion.query(query);
+        const end = Date.now();
+        const dureeExec = (end - start) / 1000;
 
-    return {
-      'status': '200',
-      'query': result,
-      'time': dureeExec
+        return {
+            'status': '200',
+            'query': result,
+            'time': dureeExec
+        }
+    } catch (error) {
+        return {
+            "status": '500',
+            "data": error,
+            "time": null
+        }
+    } finally {
+        if (connexion) await connexion.end();
     }
-  } catch (error) {
-    return {
-      "status": '500',
-      "data": error,
-      "time": null
-    }
-  } finally {
-    if (connexion) await connexion.end();
-  }
 }
 
 const insertProducts = async () => {
@@ -187,11 +188,11 @@ const insertPurchase = async () => {
 }
 
 module.exports = {
-  createMysqlStructure,
-  insertPersons,
-  insertProducts,
-  insertRelations,
-  insertPurchase,
-  getPersonMaxId,
-  getProductMaxId
+    createMysqlStructure,
+    insertPersons,
+    insertProducts,
+    insertRelations,
+    insertPurchase,
+    getPersonMaxId,
+    getProductMaxId
 }
