@@ -1,5 +1,5 @@
 const express = require('express')
-const {generatePerson} = require('../../services/PersonService');
+const {generatePersonMysql} = require('../../services/PersonService');
 const {createMysqlStructure} = require('../../repositories/MysqlRepository');
 const router = express.Router();
 
@@ -24,9 +24,9 @@ router.get('/person/generate', async (req, res) => {
  * Ajoute en base la personne renseignée
  */
 router.post('/person/add/', async (req, res) => {
-    req.props = Object.assign(req.query, req.params, req.body);
+    const {nbPerson} = req.body;
 
-    generatePerson(req.props.nbPerson).then((response) => {
+    generatePersonMysql(nbPerson).then((response) => {
         res.json({response});
     });
 });

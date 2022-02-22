@@ -1,7 +1,7 @@
 const mariadb = require('mariadb');
 const pool = mariadb.createPool({
     host: '127.0.0.1',
-    user:'root',
+    user: 'root',
     password: 'root',
     port: 3306,
     database: 'projet_nosql'
@@ -58,15 +58,15 @@ const createMysqlStructure = async () => {
         const end = Date.now();
 
         return {
-            "status" : 200,
-            "data" : "done",
-            "time" : (end - start) / 1000
+            "status": 200,
+            "data": "done",
+            "time": (end - start) / 1000
         }
     } catch (error) {
         return {
-            "status" : 409,
-            "data" : error,
-            "time" : null
+            "status": 409,
+            "data": error,
+            "time": null
         }
     } finally {
         if (connexion) await connexion.end();
@@ -84,15 +84,15 @@ const insertPersons = async (arrayPerson) => {
         const nbPersonToInsert = arrayPerson.length - insertIndex;
         const maxVal = nbPersonToInsert < batchSize ? nbPersonToInsert : batchSize;
 
-        for (let i = 0; i < maxVal - 1 ; i++) {
+        for (let i = 0; i < maxVal - 1; i++) {
             let person = arrayPerson[insertIndex];
 
-            request += `("`+ person.firstName + `", "`+ person.lastName +`"),`;
+            request += `("` + person.firstName + `", "` + person.lastName + `"),`;
 
             insertIndex++;
         }
 
-        request += `("`+ arrayPerson[insertIndex] + `", "`+ arrayPerson[insertIndex] +`");`;
+        request += `("` + arrayPerson[insertIndex] + `", "` + arrayPerson[insertIndex] + `");`;
         insertIndex++;
 
         const result = await executeQuery(request);
@@ -104,7 +104,10 @@ const insertPersons = async (arrayPerson) => {
         duration += result.time;
     }
 
-    return {status: '200', 'time': duration};
+    return {
+        status: '200',
+        'time': duration
+    };
 }
 
 const executeQuery = async (query) => {
@@ -124,9 +127,9 @@ const executeQuery = async (query) => {
         }
     } catch (error) {
         return {
-            "status" : '500',
-            "data" : error,
-            "time" : null
+            "status": '500',
+            "data": error,
+            "time": null
         }
     } finally {
         if (connexion) await connexion.end();
