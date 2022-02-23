@@ -81,40 +81,51 @@ const insertPersons = async function (arrayPerson) {
     }
 };
 
-const insertRelations = async (idMax) => {
-    const session = driver.session();
-    const nbRelationMax = 20;
+const insertRelations = async (tabRelations) => {
+    const batchSize = 100000;
+    const startVal = 0;
+    let indexAlreadyDone = 1;
+    let index = indexAlreadyDone;
+    let maxVal = tabRelations.size < batchSize ? tabRelations.size : batchSize;
+    let total = 0;
 
     try {
         let startTimeCreationRelations;
-        await session.writeTransaction((tx) => {
-            for (let j = 1; j < idMax; j++) {
-                let followedId = [];
-                const nbCurrentRelations = Math.floor(Math.random() * (nbRelationMax + 1));
+        let test = 0;
 
-                for (let i = 0; i < nbCurrentRelations; i++) {
-                    let randomId;
+        while (indexAlreadyDone < tabRelations.size) {
+            const session = driver.session();
 
-                    do {
-                        randomId = Math.floor(Math.random() * idMax + 1);
-                    } while (followedId.includes(randomId) || randomId === j);
+            await session.writeTransaction((tx) => {
+                for (let j = startVal + index; j < maxVal; j++) {
+                    if (tabRelations.has(j)) {
+                        tx.run(
+                            "MATCH (a:Person), (b:Person)" +
+                            " WHERE a.id = " + j + " AND b.id IN [" + tabRelations.get(j) +
+                            "] CREATE (a)-[:Relation]->(b)"
+                        );
+                    }
 
-                    followedId.push(randomId);
+                    indexAlreadyDone++;
                 }
 
-                tx.run(
-                    "MATCH (a:Person), (b:Person)" +
-                    " WHERE a.id = " + j + " AND b.id IN [" + followedId +
-                    "] CREATE (a)-[:Relation]->(b)"
-                );
-            }
-            startTimeCreationRelations = Date.now();
-        });
+                startTimeCreationRelations = Date.now();
+            });
 
-        const endTimeCreationRelations = Date.now();
-        const total = (endTimeCreationRelations - startTimeCreationRelations) / 1000;
+            const endTimeCreationRelations = Date.now();
+            const duration = (endTimeCreationRelations - startTimeCreationRelations) / 1000;
+            total += duration;
 
-        await session.close();
+            maxVal = tabRelations.size - maxVal < batchSize ? tabRelations.size : maxVal + batchSize;
+
+            test++;
+            await session.close();
+
+            // A dé-commenter pour vérifier que les batchs se lancent
+            //console.log('Nb relations : ' + tabRelations.size + ', BATCH ' + test);
+
+            index = indexAlreadyDone;
+        }
 
         return {time_creation_relation: total};
 
