@@ -49,9 +49,9 @@ const generateProductsData = (nbProducts) => {
     for (let i = 0; i < nbProducts; i++) {
         const productName = faker.commerce.productName();
         const price = faker.commerce.price()
-        const currentPerson = new Product(productName, price);
+        const currentProduct = new Product(productName, price);
 
-        tabProduct.push(currentPerson);
+        tabProduct.push(currentProduct);
     }
 
     return tabProduct;

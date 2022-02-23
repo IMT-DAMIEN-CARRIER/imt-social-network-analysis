@@ -35,43 +35,53 @@ const clearTable = async () => {
         });
 };
 
-const insertPersons = async function (arrayPerson) {
+const insertObject = async function (arrayObject, tableName) {
     const session = driver.session();
+    let arrayDatas;
 
-    let arrayDatas = arrayPerson.map((person, i) => ({
-        id: i, firstname: person.firstName, lastname: person.lastName
-    }));
+    if (tableName === 'Person') {
+        arrayDatas = arrayObject.map((person, i) => ({
+            id: i, firstname: person.firstName, lastname: person.lastName
+        }));
+    } else if (tableName === 'Product') {
+        arrayDatas = arrayObject.map((product, i) => ({
+            id: i, productName: product.productName, price: product.price
+        }));
+    }
 
-    let startTimeCreationPersons;
+    let startTimeCreation;
 
     try {
-        session.run('CREATE CONSTRAINT constraint_id_person IF NOT EXISTS FOR (p:Person) REQUIRE p.id IS UNIQUE');
-
         await session.writeTransaction((tx) => {
             tx.run(
-                'UNWIND $props AS map CREATE (p:Person) SET p = map',
+                'UNWIND $props AS map CREATE (p:' + tableName + ') SET p = map',
                 {
                     props: arrayDatas,
                 }
             );
 
-            startTimeCreationPersons = Date.now();
+            startTimeCreation = Date.now();
         });
 
-        const endTimeCreationPersons = Date.now();
-
-        session.run('DROP CONSTRAINT constraint_id_person IF EXISTS');
+        const endTimeCreation = Date.now();
         await session.close();
+        const timeCreation = endTimeCreation - startTimeCreation;
 
-        const timeCreationPersons = endTimeCreationPersons - startTimeCreationPersons;
+        let dataString = 'Les ' + arrayObject.length;
+
+        if (tableName === 'Person') {
+            dataString += ' personnes ont été correctements ajoutées';
+        } else if (tableName === 'Product') {
+            dataString += ' produits ont été correctements ajoutés';
+        }
 
         return {
             status: 200,
-            data: "Les " + arrayPerson.length + " personnes ont été correctements ajoutées",
-            time_person: timeCreationPersons / 1000
+            data: dataString,
+            time_person: timeCreation / 1000
         };
     } catch (error) {
-        console.log(error);
+        console.error(error);
 
         return {
             status: 409,
@@ -81,7 +91,7 @@ const insertPersons = async function (arrayPerson) {
     }
 };
 
-const insertRelations = async (tabRelations) => {
+const insertRelations = async (tabRelations, tableRightName, tableLeftName, relationName) => {
     const batchSize = 100000;
     const startVal = 0;
     let indexAlreadyDone = 1;
@@ -100,9 +110,9 @@ const insertRelations = async (tabRelations) => {
                 for (let j = startVal + index; j < maxVal; j++) {
                     if (tabRelations.has(j)) {
                         tx.run(
-                            "MATCH (a:Person), (b:Person)" +
+                            "MATCH (a:" + tableRightName + "), (b:" + tableLeftName + ")" +
                             " WHERE a.id = " + j + " AND b.id IN [" + tabRelations.get(j) +
-                            "] CREATE (a)-[:Relation]->(b)"
+                            "] CREATE (a)-[:" + relationName + "]->(b)"
                         );
                     }
 
@@ -130,7 +140,7 @@ const insertRelations = async (tabRelations) => {
         return {time_creation_relation: total};
 
     } catch (error) {
-        console.log(error);
+        console.error(error);
 
         return {
             status: 409,
@@ -142,7 +152,7 @@ const insertRelations = async (tabRelations) => {
 
 module.exports = {
     getAllDatas,
-    insertPersons,
+    insertObject,
     clearTable,
     insertRelations
 }
