@@ -1,13 +1,14 @@
 const DataGenerationService = require('./DataGenerationService');
 const MysqlRepository = require('../repositories/MysqlRepository');
 const Neo4jRepository = require('../repositories/Neo4jRepository');
+const ProductService = require('./ProductService');
 
 const generateData = async () => {
     const initNbPerson = 100000;
 
     const tabPersons = DataGenerationService.generatePersonData(initNbPerson);
     const durationInsertPerson = await MysqlRepository.insertPersons(tabPersons);
-    const resultsNosql = Neo4jRepository.insertPersons(tabPersons);
+    const resultsNosql = Neo4jRepository.insertObject(tabPersons);
     const request = await MysqlRepository.getPersonMaxId();
     const tabRelations = DataGenerationService.generateRelationsData(parseInt(request.query[0]['id']));
     const durationInsertRelations = await MysqlRepository.insertRelations(tabRelations);
@@ -25,7 +26,7 @@ const generatePersonMysql = (nbPerson) => {
     return MysqlRepository.insertPersons(tabPersons);
 }
 
-const generatePersonNeo4j = async (nbPerson) => {
+const generatePersonNeo4j = async (nbPerson, nbProduct) => {
     const tabPersons = DataGenerationService.generatePersonData(nbPerson);
     const tabRelations = DataGenerationService.generateRelationsData(nbPerson);
 
@@ -40,15 +41,29 @@ const generatePersonNeo4j = async (nbPerson) => {
         }
     });
 
-    const resultInsertPersons = await Neo4jRepository.insertPersons(tabPersons);
-    const resultInsertRelations = await Neo4jRepository.insertRelations(map);
+    const resultInsertPersons = await Neo4jRepository.insertObject(tabPersons, 'Person');
+    const resultInsertRelations = await Neo4jRepository.insertRelations(
+        map,
+        'Person',
+        'Person',
+        'Relation'
+    );
+
+    if (nbProduct > 0) {
+        const resultGenerationProduct = await ProductService.generateProductNeo4j(tabPersons, nbProduct);
+
+        return {
+            resultInsertPersons,
+            resultInsertRelations,
+            resultGenerationProduct
+        };
+    }
 
     return {
         resultInsertPersons,
-        resultInsertRelations
+        resultInsertRelations,
     };
 }
-
 
 module.exports = {
     generateData,

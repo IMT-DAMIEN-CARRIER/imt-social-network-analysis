@@ -10,9 +10,9 @@ router.get('/all', async (req, res) => {
 });
 
 router.post('/person/add', async (req, res) => {
-    const {nbPerson} = req.body;
+    const {nbPerson, nbProduct} = req.body;
 
-    generatePersonNeo4j(nbPerson).then((response) => {
+    generatePersonNeo4j(nbPerson, nbProduct).then((response) => {
         res.json({response});
     });
 })
