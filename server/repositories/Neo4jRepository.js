@@ -102,21 +102,31 @@ const insertPersons = async function (arrayPerson) {
   }
 };
 
-const insertRelations = async (tabRelations) => {
+const insertRelations = async (idMax) => {
   const session = driver.session();
+  const nbRelationMax = 20;
 
   try {
     let startTimeCreationRelations;
     await session.writeTransaction((tx) => {
-      for (j = 1; j < tabRelations.size; j++) {
+      for (j = 1; j < idMax; j++) {
 
-        if (tabRelations.has(j)) {
-          tx.run(
-              "MATCH (a:Person), (b:Person)" +
-              " WHERE a.id = " + j + " AND b.id IN [" + tabRelations.get(j) +
-              "] CREATE (a)-[:Relation]->(b)"
-          );
+        let followedId = [];
+        const nbCurrentRelations = Math.floor(Math.random() * (nbRelationMax + 1));
+
+        for (let i = 0; i < nbCurrentRelations; i++) {
+          let randomId;
+          do {
+            randomId = Math.floor(Math.random() * idMax + 1);
+          } while (followedId.includes(randomId) || randomId === j);
+
+          followedId.push(randomId);
         }
+        tx.run(
+            "MATCH (a:Person), (b:Person)" +
+            " WHERE a.id = " + j + " AND b.id IN [" + followedId +
+            "] CREATE (a)-[:Relation]->(b)"
+        );
       }
       startTimeCreationRelations = Date.now();
     });

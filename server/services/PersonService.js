@@ -30,20 +30,9 @@ const generatePersonMysql = (nbPerson) => {
 
 const generatePersonNeo4j = async (nbPerson) => {
   const tabPersons = DataGenerationService.generatePersonData(nbPerson);
-  const tabRelations = DataGenerationService.generateRelationsData(nbPerson);
-
-  const map = new Map();
-  tabRelations.forEach((item) => {
-    if (map.has(item.follower)) {
-      let element = map.get(item.follower);
-      element.push(item.followed);
-    } else {
-      map.set(item.follower, [item.followed]);
-    }
-  });
 
   const resultInsertPersons = await Neo4jRepository.insertPersons(tabPersons);
-  const resultInsertRelations = await Neo4jRepository.insertRelations(map);
+  const resultInsertRelations = await Neo4jRepository.insertRelations(nbPerson);
 
   return {
     resultInsertPersons,
