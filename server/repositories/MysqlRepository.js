@@ -7,7 +7,38 @@ const pool = mariadb.createPool({
     database: 'projet_nosql'
 });
 
+const executeQuery = async (query) => {
+    let connexion;
+
+    try {
+        connexion = await pool.getConnection();
+        const start = Date.now();
+        const result = await connexion.query(query);
+        const end = Date.now();
+        const dureeExec = (end - start) / 1000;
+
+        return {
+            'status': '200',
+            'query': result,
+            'time': dureeExec
+        }
+    } catch (error) {
+        return {
+            'status': '500',
+            'data': error,
+            'time': null
+        }
+    } finally {
+        if (connexion) await connexion.end();
+    }
+}
+
 const createMysqlStructure = async () => {
+    const dropPerson = 'DROP TABLE IF EXISTS person';
+    const dropRelation = 'DROP TABLE IF EXISTS relation';
+    const dropProduct = 'DROP TABLE IF EXISTS product';
+    const dropOrders = 'DROP TABLE IF EXISTS orders';
+
     const person = `
         CREATE TABLE IF NOT EXISTS person (
             id INT NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -18,13 +49,13 @@ const createMysqlStructure = async () => {
 
     const relation = `
         CREATE TABLE IF NOT EXISTS relation (
-            id_person_following INT NOT NULL,
-            id_person_followed INT NOT NULL,
-            CONSTRAINT fk_id_person_following FOREIGN KEY (id_person_following) REFERENCES person(id),
-            CONSTRAINT fk_id_person_followed FOREIGN KEY (id_person_followed) REFERENCES person(id),
-            CONSTRAINT pk_relationship PRIMARY KEY (id_person_following, id_person_followed)
+            id_influencer INT NOT NULL,
+            id_follower INT NOT NULL,
+            CONSTRAINT fk_id_person_following FOREIGN KEY (id_influencer) REFERENCES person (id),
+            CONSTRAINT fk_id_person_followed FOREIGN KEY (id_follower) REFERENCES person (id),
+            CONSTRAINT pk_relationship PRIMARY KEY (id_influencer, id_follower)
         ) ENGINE InnoDB;
-    `
+    `;
 
     const product = `
         CREATE TABLE IF NOT EXISTS product (
@@ -32,17 +63,17 @@ const createMysqlStructure = async () => {
             productName VARCHAR(255) NOT NULL,
             price INT NOT NULL
         ) ENGINE InnoDB;
-    `
+    `;
 
     const order = `
         CREATE TABLE IF NOT EXISTS orders (
             id_person INT NOT NULL,
             id_product INT NOT NULL,
-            CONSTRAINT fk_id_person FOREIGN KEY (id_person) REFERENCES person(id),
-            CONSTRAINT fk_id_product FOREIGN KEY (id_product) REFERENCES product(id),
+            CONSTRAINT fk_id_person FOREIGN KEY (id_person) REFERENCES person (id),
+            CONSTRAINT fk_id_product FOREIGN KEY (id_product) REFERENCES product (id),
             CONSTRAINT pk_purchase PRIMARY KEY (id_person, id_product)
         ) ENGINE InnoDB;
-    `
+    `;
 
     let connexion;
 
@@ -50,23 +81,27 @@ const createMysqlStructure = async () => {
         connexion = await pool.getConnection();
         const start = Date.now();
 
+        await connexion.query(dropRelation);
+        await connexion.query(dropOrders);
+        await connexion.query(dropPerson);
+        await connexion.query(dropProduct);
         await connexion.query(person);
-        await connexion.query(relation);
         await connexion.query(product);
+        await connexion.query(relation);
         await connexion.query(order);
 
         const end = Date.now();
 
         return {
-            "status": 200,
-            "data": "done",
-            "time": (end - start) / 1000
+            'status': 200,
+            'data': 'done',
+            'time': (end - start) / 1000
         }
     } catch (error) {
         return {
-            "status": 409,
-            "data": error,
-            "time": null
+            'status': 409,
+            'data': error,
+            'time': null
         }
     } finally {
         if (connexion) await connexion.end();
@@ -117,8 +152,9 @@ const insertPersons = async (arrayPerson) => {
     }
 
     return {
-        status: '200',
-        'time': duration
+        'status': '200',
+        'time': duration,
+        'data': 'L\'insertion de ' + arrayPerson.length + ' a été réalisée'
     };
 }
 
@@ -129,7 +165,7 @@ const insertRelations = async (arrayRelations) => {
 
     while (insertIndex < arrayRelations.length) {
         // create batch
-        let request = 'INSERT INTO relation (id_person_following, id_person_followed) VALUES';
+        let request = 'INSERT INTO relation (id_influencer, id_follower) VALUES';
         const nbRelationToInsert = arrayRelations.length - insertIndex;
         const maxVal = nbRelationToInsert < batchSize ? nbRelationToInsert : batchSize;
 
@@ -154,35 +190,10 @@ const insertRelations = async (arrayRelations) => {
     }
 
     return {
-        status: '200',
-        'time': duration
+        'status': '200',
+        'time': duration,
+        'data': 'L\'insertion de ' + arrayRelations.length + ' a été réalisée'
     };
-}
-
-const executeQuery = async (query) => {
-    let connexion;
-
-    try {
-        connexion = await pool.getConnection();
-        const start = Date.now();
-        const result = await connexion.query(query);
-        const end = Date.now();
-        const dureeExec = (end - start) / 1000;
-
-        return {
-            'status': '200',
-            'query': result,
-            'time': dureeExec
-        }
-    } catch (error) {
-        return {
-            "status": '500',
-            "data": error,
-            "time": null
-        }
-    } finally {
-        if (connexion) await connexion.end();
-    }
 }
 
 const insertProducts = async (arrayProduct) => {
@@ -214,9 +225,9 @@ const insertProducts = async (arrayProduct) => {
     }
 
     return {
-        status: '200',
+        'status': '200',
         'time': duration,
-        data: 'L\'insertion de ' + arrayProduct.length + ' produits a été réalisée.'
+        'data': 'L\'insertion de ' + arrayProduct.length + ' produits a été réalisée.'
     };
 }
 
@@ -251,7 +262,7 @@ const insertPurchase = async (arrayPurchase) => {
     }
 
     return {
-        status: '200',
+        'status': '200',
         'time': duration,
         'data': 'Les relations de personnes -> produits ont été insérées'
     };
@@ -263,6 +274,136 @@ const findAllPersons = async () => {
     return {result};
 }
 
+const getProductByInfluencer = async (idInfluencer) => {
+    if (idInfluencer === 0) {
+        return {
+            'status': '500',
+            'data': 'Error 500'
+        };
+    }
+
+    let request = ` SELECT pr.id
+            FROM product pr
+            JOIN orders o ON pr.id=o.id_product
+            JOIN person p ON o.id_person=p.id
+            WHERE p.id=
+    ` + idInfluencer + ' ORDER BY pr.id';
+
+    return await executeQuery(request);
+}
+
+const generateRequestSelectOneAndTwo = (request, depth, idInfluencer) => {
+    if (depth > 0) {
+        for (let counter = 1; counter <= depth; counter++) {
+            request += ' OR o.id_person IN';
+
+            for (let i = 1; i < counter; i++) {
+                request += `
+                (SELECT r.id_follower
+                    FROM relation r
+                    WHERE r.id_influencer IN 
+                `;
+            }
+
+            request += `
+                (SELECT r.id_follower
+                    FROM relation r
+                    WHERE r.id_influencer=` + idInfluencer;
+
+            request += ')'.repeat(counter);
+        }
+    }
+
+    return request
+}
+
+const getProductsOrderedByFollowers = async (idInfluencer, depth, limit) => {
+    if (idInfluencer === 0) {
+        return {
+            status: '500',
+            'data': 'Error 500'
+        };
+    }
+
+    let request = `SELECT pr.id, pr.productName, COUNT(o.id_person) AS nbOrders 
+                FROM product pr
+                JOIN orders o ON pr.id=o.id_product
+                JOIN person p ON p.id=o.id_person
+                WHERE p.id=` + idInfluencer
+    ;
+
+    request = generateRequestSelectOneAndTwo(request, depth, idInfluencer);
+    request += ' GROUP BY pr.id LIMIT ' + limit;
+
+    return await executeQuery(request);
+}
+
+const getProductsOrderedByFollowersAndByProduct = async (idInfluencer, idProduct, depth) => {
+    if (!idInfluencer) {
+        return {
+            'status': '500',
+            'data': 'Error 500 : influenceur'
+        };
+    }
+
+    if (!idProduct) {
+        return {
+            'status': '500',
+            'data': 'Error 500 : product'
+        };
+    }
+
+    let request = `SELECT pr.id, pr.productName, COUNT(o.id_person) AS nbOrders 
+                FROM product pr
+                JOIN orders o ON pr.id=o.id_product
+                JOIN person p ON p.id=o.id_person
+                WHERE pr.id=` + idProduct + ' AND (p.id=' + idInfluencer
+    ;
+
+    request = generateRequestSelectOneAndTwo(request, depth, idInfluencer);
+    request += ') GROUP BY pr.id';
+
+    return await executeQuery(request);
+}
+
+const getProductVirality = async (idProduct, depth) => {
+    if (!idProduct) {
+        return {
+            'status': '500',
+            'data': 'Error 500 : product'
+        };
+    }
+
+    let request = `SELECT pr.productName, COUNT(o.id_person) AS 'nbOrder'
+            FROM product pr
+            JOIN orders o ON pr.id=o.id_product
+            WHERE pr.id=` + idProduct;
+
+    if (depth > 0) {
+        request += ' AND O.id_person IN ';
+
+        for (let i = 1; i < depth; i++) {
+            request += `(SELECT r.id_influencer
+                FROM relation r
+                JOIN orders o ON r.id_follower=o.id_person
+                JOIN product pr ON o.id_product=pr.id
+                WHERE pr.id=` + idProduct + ' AND r.id_influencer IN ';
+        }
+
+        request += `(SELECT r.id_influencer
+                FROM relation r
+                JOIN orders o ON r.id_follower=o.id_person
+                JOIN product pr ON o.id_product=pr.id
+                WHERE pr.id=` + idProduct;
+
+        request += ')'.repeat(depth);
+    }
+
+    request += ' GROUP BY pr.id';
+
+    return await executeQuery(request);
+}
+
 module.exports = {
     createMysqlStructure,
     insertPersons,
@@ -271,5 +412,9 @@ module.exports = {
     insertPurchase,
     getPersonMaxId,
     getProductMaxId,
-    findAllPersons
+    findAllPersons,
+    getProductByInfluencer,
+    getProductsOrderedByFollowers,
+    getProductsOrderedByFollowersAndByProduct,
+    getProductVirality
 }

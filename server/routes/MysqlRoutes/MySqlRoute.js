@@ -2,7 +2,8 @@ const express = require('express')
 const {
     generatePersonMysql,
     generateProductMysql,
-    findAllPerson, generateDataMysql
+    findAllPerson, generateDataMysql, getProductsOrderedByFollowers, getProductsOrderedByFollowersAndByProduct,
+    getProductVirality
 } = require('../../services/PersonService');
 const {createMysqlStructure} = require('../../repositories/MysqlRepository');
 const router = express.Router();
@@ -56,5 +57,32 @@ router.get('/person/all', async (req, res) => {
         res.json({response});
     });
 });
+
+router.get('/person/get/product-ordered-from-followers-by-influencer', async (req, res) => {
+    const {profondeur, limit} = req.body;
+    const limitReq = !limit ? 5 : limit;
+
+    getProductsOrderedByFollowers(profondeur, limitReq).then((response) => {
+        res.json(response);
+    });
+});
+
+router.get('/person/get/product-ordered-from-followers-by-influencer-by-product', async (req, res) => {
+    const {profondeur, limit} = req.body;
+
+    getProductsOrderedByFollowersAndByProduct(profondeur).then((response) => {
+        res.json(response);
+    });
+});
+
+router.get('/person/get/product-virality', async (req, res) => {
+    const {profondeur} = req.body;
+
+    getProductVirality(profondeur).then((response) => {
+        res.json(response);
+    })
+})
+
+router.get('')
 
 module.exports = router;
