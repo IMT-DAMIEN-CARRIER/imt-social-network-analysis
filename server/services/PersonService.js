@@ -3,27 +3,44 @@ const MysqlRepository = require('../repositories/MysqlRepository');
 const Neo4jRepository = require('../repositories/Neo4jRepository');
 const ProductService = require('./ProductService');
 
-const generateData = async () => {
-    const initNbPerson = 100000;
+const generateDataMysql = async (nbPerson, nbProduct) => {
+    const durationGenerateStructure = await MysqlRepository.createMysqlStructure();
+    const durationInsertPerson = await generatePersonMysql(nbPerson);
+    const durationInsertProduct = await generateProductMysql(nbProduct)
 
-    const tabPersons = DataGenerationService.generatePersonData(initNbPerson);
-    const durationInsertPerson = await MysqlRepository.insertPersons(tabPersons);
-    const resultsNosql = Neo4jRepository.insertObject(tabPersons);
+    return {
+        durationGenerateStructure,
+        durationInsertPerson,
+        durationInsertProduct,
+    };
+}
+
+const generatePersonMysql = async (nbPerson) => {
+    const tabPersons = DataGenerationService.generatePersonData(nbPerson);
+    const durationInsertPersons = await MysqlRepository.insertPersons(tabPersons);
     const request = await MysqlRepository.getPersonMaxId();
     const tabRelations = DataGenerationService.generateRelationsData(parseInt(request.query[0]['id']));
     const durationInsertRelations = await MysqlRepository.insertRelations(tabRelations);
 
     return {
-        'durationInsertPersonMysql': durationInsertPerson,
-        'durationInsertRelationsMysql': durationInsertRelations,
-        'durationInsertPersoNeo4J': resultsNosql
+        durationInsertPersons,
+        durationInsertRelations
     };
 }
 
-const generatePersonMysql = (nbPerson) => {
-    const tabPersons = DataGenerationService.generatePersonData(nbPerson);
+const generateProductMysql = async (nbProduct) => {
+    const tabProducts = DataGenerationService.generateProductsData(nbProduct);
+    const durationInsertProducts = await MysqlRepository.insertProducts(tabProducts);
+    const tabPersons = await MysqlRepository.findAllPersons();
+    const request = await MysqlRepository.getProductMaxId();
 
-    return MysqlRepository.insertPersons(tabPersons);
+    const tabPurchases = DataGenerationService.generateProductsRelationsData(tabPersons.result.query, request.query[0]['id']);
+    const durationInsertPurchase = await MysqlRepository.insertPurchase(tabPurchases);
+
+    return {
+        durationInsertProducts,
+        durationInsertPurchase
+    };
 }
 
 const generatePersonNeo4j = async (nbPerson, nbProduct) => {
@@ -65,8 +82,16 @@ const generatePersonNeo4j = async (nbPerson, nbProduct) => {
     };
 }
 
+const findAllPerson = async () => {
+    const resultFindAllPersons = await MysqlRepository.findAllPersons();
+
+    return {"resultFindAllPersons": resultFindAllPersons.result.query}
+}
+
 module.exports = {
-    generateData,
+    generateDataMysql,
     generatePersonMysql,
-    generatePersonNeo4j
+    generateProductMysql,
+    generatePersonNeo4j,
+    findAllPerson
 }

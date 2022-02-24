@@ -1,5 +1,9 @@
 const express = require('express')
-const {generatePersonMysql, generateData} = require('../../services/PersonService');
+const {
+    generatePersonMysql,
+    generateProductMysql,
+    findAllPerson, generateDataMysql
+} = require('../../services/PersonService');
 const {createMysqlStructure} = require('../../repositories/MysqlRepository');
 const router = express.Router();
 
@@ -31,10 +35,26 @@ router.post('/person/add/', async (req, res) => {
     });
 });
 
-router.post('/test', async (req, res) => {
+router.post('/person/generate/datas', async (req, res) => {
+    const {nbPerson, nbProduct} = req.body;
 
-    generateData().then((response) => {
+    generateDataMysql(nbPerson, nbProduct).then((response) => {
         res.json({response});
     });
 });
+
+router.post('/product/add/', async (req, res) => {
+    const {nbProduct} = req.body;
+
+    generateProductMysql(nbProduct).then((response) => {
+        res.json({response});
+    })
+});
+
+router.get('/person/all', async (req, res) => {
+    findAllPerson().then((response) => {
+        res.json({response});
+    });
+});
+
 module.exports = router;
