@@ -82,7 +82,7 @@ const getPersonMaxId = async () => {
 const getProductMaxId = async () => {
     const request = `SELECT MAX(id) as id FROM product;`;
 
-    return result.query.id = await executeQuery(request);
+    return await executeQuery(request);
 }
 
 const insertPersons = async (arrayPerson) => {
@@ -92,14 +92,14 @@ const insertPersons = async (arrayPerson) => {
 
     while (insertIndex < arrayPerson.length) {
         // create batch
-        let request = `INSERT INTO person (firstname, lastname) VALUES`;
+        let request = 'INSERT INTO person (firstname, lastname) VALUES';
         const nbPersonToInsert = arrayPerson.length - insertIndex;
-        const maxVal = nbPersonToInsert < batchSize ? nbPersonToInsert : batchSize;
+        const maxVal = nbPersonToInsert <= batchSize ? nbPersonToInsert : batchSize;
 
         for (let i = 0; i < maxVal - 1; i++) {
             let person = arrayPerson[insertIndex];
 
-            request += `("` + person.firstName + `", "` + person.lastName + `"),`;
+            request += '("' + person.firstName + '", "' + person.lastName + '"),';
 
             insertIndex++;
         }
@@ -116,7 +116,10 @@ const insertPersons = async (arrayPerson) => {
         duration += result.time;
     }
 
-    return {status: '200', 'time': duration};
+    return {
+        status: '200',
+        'time': duration
+    };
 }
 
 const insertRelations = async (arrayRelations) => {
@@ -126,14 +129,14 @@ const insertRelations = async (arrayRelations) => {
 
     while (insertIndex < arrayRelations.length) {
         // create batch
-        let request = `INSERT INTO relation (id_person_following, id_person_followed) VALUES`;
+        let request = 'INSERT INTO relation (id_person_following, id_person_followed) VALUES';
         const nbRelationToInsert = arrayRelations.length - insertIndex;
         const maxVal = nbRelationToInsert < batchSize ? nbRelationToInsert : batchSize;
 
         for (let i = 0; i < maxVal - 1; i++) {
             let relation = arrayRelations[insertIndex];
 
-            request += `(` + relation.follower + `, ` + relation.followed + `),`;
+            request += '(' + relation.follower + ', ' + relation.followed + '),';
 
             insertIndex++;
         }
@@ -150,7 +153,10 @@ const insertRelations = async (arrayRelations) => {
         duration += result.time;
     }
 
-    return {status: '200', 'time': duration};
+    return {
+        status: '200',
+        'time': duration
+    };
 }
 
 const executeQuery = async (query) => {
@@ -179,12 +185,82 @@ const executeQuery = async (query) => {
     }
 }
 
-const insertProducts = async () => {
+const insertProducts = async (arrayProduct) => {
+    const batchSize = 100000;
+    let insertIndex = 0;
+    let duration = 0;
 
+    while (insertIndex < arrayProduct.length) {
+        let request = 'INSERT INTO product (productName, price) VALUES ';
+        const nbProductToInsert = arrayProduct.length - insertIndex;
+        const maxVal = nbProductToInsert < batchSize ? nbProductToInsert : batchSize;
+
+        for (let i = 0; i < maxVal - 1; i++) {
+            let product = arrayProduct[insertIndex];
+            request += '("' + product.productName + '", "' + product.price + '"),';
+            insertIndex++;
+        }
+
+        request += '("' + arrayProduct[insertIndex].productName + '", "' + arrayProduct[insertIndex].price + '");';
+        insertIndex++;
+
+        const result = await executeQuery(request);
+
+        if (result.status === '500') {
+            return result;
+        }
+
+        duration += result.time;
+    }
+
+    return {
+        status: '200',
+        'time': duration,
+        data: 'L\'insertion de ' + arrayProduct.length + ' produits a été réalisée.'
+    };
 }
 
-const insertPurchase = async () => {
+const insertPurchase = async (arrayPurchase) => {
+    const batchSize = 100000;
+    let insertIndex = 0;
+    let duration = 0;
 
+    while (insertIndex < arrayPurchase.length) {
+        let request = 'INSERT INTO orders (id_person, id_product) VALUES ';
+        const nbRelationToInsert = arrayPurchase.length - insertIndex;
+        const maxVal = nbRelationToInsert < batchSize ? nbRelationToInsert : batchSize;
+
+        for (let i = 0; i < maxVal - 1; i++) {
+            let relation = arrayPurchase[insertIndex];
+
+            request += '(' + relation.person + ', ' + relation.product + '),';
+
+            insertIndex++;
+        }
+
+        request += `(` + arrayPurchase[insertIndex].person + `, ` + arrayPurchase[insertIndex].product + `);`;
+        insertIndex++;
+
+        const result = await executeQuery(request);
+
+        if (result.status === '500') {
+            return result;
+        }
+
+        duration += result.time;
+    }
+
+    return {
+        status: '200',
+        'time': duration,
+        'data': 'Les relations de personnes -> produits ont été insérées'
+    };
+}
+
+const findAllPersons = async () => {
+    const result = await executeQuery('SELECT * FROM person;');
+
+    return {result};
 }
 
 module.exports = {
@@ -194,5 +270,6 @@ module.exports = {
     insertRelations,
     insertPurchase,
     getPersonMaxId,
-    getProductMaxId
+    getProductMaxId,
+    findAllPersons
 }

@@ -57,7 +57,7 @@ const generateProductsData = (nbProducts) => {
     return tabProduct;
 }
 
-const generateProductsRelationsData = (tabPersons, tabProducts) => {
+const generateProductsRelationsData = (tabPersons, maxIdProduct) => {
     let relationTab = [];
     const nbRelationsMax = 5;
 
@@ -69,14 +69,14 @@ const generateProductsRelationsData = (tabPersons, tabProducts) => {
             let randomProduct;
 
             do {
-                randomProduct = tabProducts[Math.floor(Math.random() * tabProducts.length)];
-            } while (idAlreadyUsed.includes(randomProduct.id));
+                randomProduct = Math.floor(Math.random() * maxIdProduct + 1);
+            } while (idAlreadyUsed.includes(randomProduct));
 
-            idAlreadyUsed.push(randomProduct.id)
+            idAlreadyUsed.push(randomProduct)
 
             relationTab.push({
                 "person": person.id,
-                "product": randomProduct.id
+                "product": randomProduct
             })
         }
     });
