@@ -88,10 +88,66 @@ const findAllPerson = async () => {
     return {"resultFindAllPersons": resultFindAllPersons.result.query}
 }
 
+const getProductsOrderedByFollowers = async (profondeur, limit) => {
+    const request = await MysqlRepository.getPersonMaxId();
+    let idInfluenceur = 0;
+
+    if (request.query[0]['id']) {
+        idInfluenceur = Math.floor(Math.random() * request.query[0]['id'] + 1);
+    }
+
+    return {
+        'idInfluenceur': idInfluenceur,
+        'result': await MysqlRepository.getProductsOrderedByFollowers(idInfluenceur, profondeur, limit)
+    };
+}
+
+const getProductsOrderedByFollowersAndByProduct = async (profondeur) => {
+    const requestInfluenceur = await MysqlRepository.getPersonMaxId();
+    let idInfluenceur, idProduct = 0;
+    const maxId = requestInfluenceur.query[0]['id'];
+
+    if (requestInfluenceur.query[0]['id']) {
+        do {
+            idInfluenceur = Math.floor(Math.random() * maxId + 1);
+
+            // On récupère la liste des produits pour l'influenceur aléatoire
+            const tabProduct = await MysqlRepository.getProductByInfluencer(idInfluenceur);
+
+            // On tire au sort l'un des produits de l'influenceur
+            const randomIdProduct = Math.floor(Math.random() * tabProduct.query.length);
+            idProduct = tabProduct.query[randomIdProduct]?.id;
+        } while (!idProduct);
+    }
+
+    return {
+        'idInfluenceur': idInfluenceur,
+        'idProduct': idProduct,
+        'result': await MysqlRepository.getProductsOrderedByFollowersAndByProduct(idInfluenceur, idProduct, profondeur)
+    };
+}
+
+const getProductVirality = async (profondeur) => {
+    // On récupère la liste des produits pour l'influenceur aléatoire
+    const maxProduct = await MysqlRepository.getProductMaxId();
+    const maxId = maxProduct.query[0]['id'];
+
+    // On tire au sort l'un des produits de l'influenceur
+    const idProduct = Math.floor(Math.random() * maxId + 1);
+
+    return {
+        'idProduct': idProduct,
+        'result': await MysqlRepository.getProductVirality(idProduct, profondeur)
+    }
+}
+
 module.exports = {
     generateDataMysql,
     generatePersonMysql,
     generateProductMysql,
     generatePersonNeo4j,
-    findAllPerson
+    findAllPerson,
+    getProductsOrderedByFollowers,
+    getProductsOrderedByFollowersAndByProduct,
+    getProductVirality
 }
