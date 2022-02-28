@@ -161,18 +161,17 @@ const insertOrders = async (tabOrders) => {
     }
 }
 
-const getProductsOrderedByFollowers = async (firstname, lastname, depth) => {
+const getProductsOrderedByFollowers = async (influencer, depth) => {
     let products = [];
-    let start;
 
     try {
         const session = driver.session();
-        const query = ` MATCH (:Person {firstname: '${firstname}', lastname: '${lastname}'})<-[:Relation *1..${depth}]-(p:Person)
+        const query = ` MATCH (:Person {firstname: '${influencer.firstname}', lastname: '${influencer.lastname}'})<-[:Relation *1..${depth}]-(p:Person)
               WITH DISTINCT p
               MATCH (p)-[:Order]->(n:Product)
               RETURN n.name, COUNT(*)`;
 
-        start = Date.now();
+        const start = Date.now();
         const data = await session.run(query, {});
 
         for (let i = 0; i < data.records.length; i++) {
@@ -184,13 +183,85 @@ const getProductsOrderedByFollowers = async (firstname, lastname, depth) => {
             )
         }
 
-        const duration = Date.now() - start;
         await session.close();
+        const duration = Date.now() - start;
 
         return {
             status: 200,
             time: duration,
             data: products
+        }
+    } catch (e) {
+        console.error(e);
+
+        return {
+            status: 409,
+            data: e,
+            time: null,
+        };
+    }
+}
+
+const getProductsOrderedByFollowersAndByProduct = async (influencer, productName, depth) => {
+    try {
+        const session = driver.session();
+        const query = ` MATCH (:Person{firstname: '${influencer.firstname}', lastname: '${influencer.lastname}'})<-[:Relation *1..${depth}]-(p:Person)
+                  WITH DISTINCT p
+                  MATCH (p)-[:Order]->(n:Product{name: '${productName}'})
+                  RETURN n.name, COUNT(*)`;
+
+        const start = Date.now();
+        const data = await session.run(query, {});
+        const count = data.records[0].get(1);
+        await session.close();
+        const duration = Date.now() - start;
+
+        const results = {
+            name: productName,
+            influenceur: influencer.firstname + ' ' + influencer.lastname,
+            nbOrders: count.low
+        }
+
+        return {
+            status: 200,
+            time: duration,
+            data: results
+        }
+    } catch (e) {
+        console.error(e);
+
+        return {
+            status: 409,
+            data: e,
+            time: null,
+        };
+    }
+}
+
+const getProductVirality = async (productName, depth) => {
+    try {
+        const session = driver.session();
+
+        const query = ` MATCH(:Product {name:'${productName}'})<-[:Order]-(:Person)<-[:Relation *1..${depth}]-(p:Person)
+              WITH DISTINCT p
+              MATCH (p)-[n:Order]->(:Product {name:'${productName}'})
+              RETURN COUNT (n)`;
+
+        const start = Date.now();
+        const data = await session.run(query, {});
+        const nbOrders = data.records[0].get(0).low;
+        const duration = Date.now() - start;
+        await session.close();
+
+        const result = {
+            productName: productName,
+            nbOrders: nbOrders
+        }
+
+        return {
+            status: 200,
+            time: duration,
+            data: result
         }
     } catch (e) {
         console.error(e);
@@ -209,5 +280,7 @@ module.exports = {
     clearTable,
     insertRelations,
     insertOrders,
-    getProductsOrderedByFollowers
+    getProductsOrderedByFollowers,
+    getProductsOrderedByFollowersAndByProduct,
+    getProductVirality
 }

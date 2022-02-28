@@ -1,7 +1,7 @@
 const DataGenerationService = require('./DataGenerationService');
 const Neo4jRepository = require('../repositories/Neo4jRepository');
 
-const generateProductNeo4j = async (tabPersons, nbProduct) => {
+const generateProductNeo4j = async (nbProduct) => {
     const tabProducts = DataGenerationService.generateProductsData(nbProduct);
     const resultInsertProduct = await Neo4jRepository.insertObject(tabProducts, 'Product');
 
