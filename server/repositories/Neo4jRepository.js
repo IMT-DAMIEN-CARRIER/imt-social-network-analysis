@@ -11,7 +11,7 @@ const driver = neo4j.driver(
 const getAllDatas = async () => {
     const session = driver.session();
 
-    session
+    await session
         .run('Match(n) RETURN n')
         .then(function (result) {
             console.log(result.records);
@@ -25,7 +25,7 @@ const getAllDatas = async () => {
 const clearTable = async () => {
     const session = driver.session();
 
-    session
+    await session
         .run('MATCH (n) DETACH DELETE n')
         .then(function () {
             session.close();
@@ -161,10 +161,53 @@ const insertOrders = async (tabOrders) => {
     }
 }
 
+const getProductsOrderedByFollowers = async (firstname, lastname, depth) => {
+    let products = [];
+    let start;
+
+    try {
+        const session = driver.session();
+        const query = ` MATCH (:Person {firstname: '${firstname}', lastname: '${lastname}'})<-[:Relation *1..${depth}]-(p:Person)
+              WITH DISTINCT p
+              MATCH (p)-[:Order]->(n:Product)
+              RETURN n.name, COUNT(*)`;
+
+        start = Date.now();
+        const data = await session.run(query, {});
+
+        for (let i = 0; i < data.records.length; i++) {
+            products.push(
+                {
+                    name: data.records[i].get(0),
+                    nbrOrders: data.records[i].get(1).low
+                }
+            )
+        }
+
+        const duration = Date.now() - start;
+        await session.close();
+
+        return {
+            status: 200,
+            time: duration,
+            data: products
+        }
+    } catch (e) {
+        console.error(e);
+
+        return {
+            status: 409,
+            data: e,
+            time: null,
+        };
+    }
+}
+
 module.exports = {
     getAllDatas,
     insertObject,
     clearTable,
     insertRelations,
-    insertOrders
+    insertOrders,
+    getProductsOrderedByFollowers
 }

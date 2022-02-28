@@ -4,7 +4,7 @@ const {generatePersonNeo4j} = require("../../services/PersonService");
 const router = express.Router();
 
 router.get('/all', async (req, res) => {
-    getAllDatas().then((response) => {
+    await getAllDatas().then((response) => {
         res.json({res: response});
     });
 });
@@ -18,7 +18,7 @@ router.post('/person/add', async (req, res) => {
 })
 
 router.delete("/clearTable", async (req, res) => {
-    clearTable().then((response) => {
+    await clearTable().then((response) => {
         res.json({res: response});
     });
 });
