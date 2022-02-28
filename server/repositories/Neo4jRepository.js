@@ -27,7 +27,7 @@ const clearTable = async () => {
 
     session
         .run('MATCH (n) DETACH DELETE n')
-        .then(function (result) {
+        .then(function () {
             session.close();
         })
         .catch((error) => {
@@ -40,12 +40,12 @@ const insertObject = async function (arrayObject, tableName) {
     let arrayDatas;
 
     if (tableName === 'Person') {
-        arrayDatas = arrayObject.map((person, i) => ({
-            id: i, firstname: person.firstName, lastname: person.lastName
+        arrayDatas = arrayObject.map((person) => ({
+            firstname: person.firstName, lastname: person.lastName
         }));
     } else if (tableName === 'Product') {
-        arrayDatas = arrayObject.map((product, i) => ({
-            id: i, productName: product.productName, price: product.price
+        arrayDatas = arrayObject.map((product) => ({
+            productName: product.productName, price: product.price
         }));
     }
 
@@ -91,54 +91,30 @@ const insertObject = async function (arrayObject, tableName) {
     }
 };
 
-const insertRelations = async (tabRelations, tableRightName, tableLeftName, relationName) => {
-    const batchSize = 100000;
-    const startVal = 0;
-    let indexAlreadyDone = 1;
-    let index = indexAlreadyDone;
-    let maxVal = tabRelations.size < batchSize ? tabRelations.size : batchSize;
-    let total = 0;
-
+const insertRelations = async (tabRelations) => {
     try {
-        let startTimeCreationRelations;
-        let test = 0;
+        const session = driver.session();
 
-        while (indexAlreadyDone < tabRelations.size) {
-            const session = driver.session();
+        let start;
+        await session.writeTransaction((tx) => {
+            tx.run(
+                `UNWIND $listFollow as followTab
+         MATCH (p1:Person) WHERE ID(p1) = followTab.influencer
+         UNWIND followTab.follower as followerTab
+         MATCH (p2:Person) WHERE ID(p2) = followerTab
+         CREATE (p1)-[:Relation]->(p2)
+         RETURN p1, p2`,
+                {
+                    listFollow: tabRelations
+                });
 
-            await session.writeTransaction((tx) => {
-                for (let j = startVal + index; j < maxVal; j++) {
-                    if (tabRelations.has(j)) {
-                        tx.run(
-                            "MATCH (a:" + tableRightName + "), (b:" + tableLeftName + ")" +
-                            " WHERE a.id = " + j + " AND b.id IN [" + tabRelations.get(j) +
-                            "] CREATE (a)-[:" + relationName + "]->(b)"
-                        );
-                    }
+            start = Date.now();
+        });
+        const end = Date.now();
+        const duration = (end - start) / 1000;
+        await session.close();
 
-                    indexAlreadyDone++;
-                }
-
-                startTimeCreationRelations = Date.now();
-            });
-
-            const endTimeCreationRelations = Date.now();
-            const duration = (endTimeCreationRelations - startTimeCreationRelations) / 1000;
-            total += duration;
-
-            maxVal = tabRelations.size - maxVal < batchSize ? tabRelations.size : maxVal + batchSize;
-
-            test++;
-            await session.close();
-
-            // A dé-commenter pour vérifier que les batchs se lancent
-            //console.log('Nb relations : ' + tabRelations.size + ', BATCH ' + test);
-
-            index = indexAlreadyDone;
-        }
-
-        return {time_creation_relation: total};
-
+        return {time_creation_relations: duration};
     } catch (error) {
         console.error(error);
 
@@ -148,11 +124,47 @@ const insertRelations = async (tabRelations, tableRightName, tableLeftName, rela
             time: null,
         };
     }
-};
+}
+
+const insertOrders = async (tabOrders) => {
+    try {
+        const session = driver.session();
+
+        let start;
+        await session.writeTransaction((tx) => {
+            tx.run(
+                `UNWIND $ordersList as orderTab
+           MATCH (p1:Person) WHERE ID(p1) = orderTab.idPerson
+           UNWIND orderTab.ordersList as productTab
+           MATCH (p2:Product) WHERE ID(p2) = productTab
+           CREATE (p1)-[:Order]->(p2)
+           RETURN p1,p2`,
+                {
+                    ordersList: tabOrders
+                });
+            start = Date.now();
+        });
+
+        const end = Date.now();
+        const duration = (end - start) / 1000;
+        await session.close();
+
+        return {time_creation_orders: duration};
+    } catch (error) {
+        console.error(error);
+
+        return {
+            status: 409,
+            data: error,
+            time: null,
+        };
+    }
+}
 
 module.exports = {
     getAllDatas,
     insertObject,
     clearTable,
-    insertRelations
+    insertRelations,
+    insertOrders
 }

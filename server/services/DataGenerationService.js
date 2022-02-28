@@ -2,6 +2,16 @@ const Person = require('../entity/Person');
 const Product = require("../entity/Product");
 
 const {faker} = require('@faker-js/faker');
+const neo4j = require("neo4j-driver");
+const _ = require('lodash');
+
+const driver = neo4j.driver(
+    "neo4j://0.0.0.0:7687",
+    neo4j.auth.basic(
+        "neo4j",
+        "admin"
+    )
+);
 
 const generatePersonData = (nbPerson) => {
     let tabPersons = [];
@@ -17,7 +27,7 @@ const generatePersonData = (nbPerson) => {
     return tabPersons;
 }
 
-const generateRelationsData = (maxId) => {
+const generateRelationsDataMysql = (maxId) => {
     const nbRelationMax = 20;
     let relations = [];
 
@@ -34,13 +44,58 @@ const generateRelationsData = (maxId) => {
             idAlreadyUsed.push(randomId);
 
             relations.push({
-                "follower": idPerson,
-                "followed": randomId
+                "influencer": idPerson,
+                "follower": randomId
             });
         }
     }
 
     return relations;
+}
+
+const generateRelationsDataNeo4j = async () => {
+    let tabRelations = [];
+    const nbRelationMax = 20;
+
+    try {
+        const session = driver.session();
+        let query = `MATCH (n:Person) RETURN count(n)`;
+        let response = await session.run(query, {});
+        const nbPersons = _.get(response, 'records[0]._fields[0].low');
+
+        let idMinPerson;
+        query = `MATCH (n:Person) RETURN min(id(n))`;
+        response = await session.run(query, {});
+        idMinPerson = _.get(response, 'records[0]._fields[0].low');
+
+        let tabFollowers = [];
+        let randomFollow;
+
+        for (let i = 0; i < nbPersons; i++) {
+            let randNbRelation = Math.floor(Math.random() * nbRelationMax);
+
+            for (let j = 0; j < randNbRelation; j++) {
+                do {
+                    randomFollow = Math.floor(Math.random() * nbPersons) + idMinPerson;
+                } while (tabFollowers.includes(randomFollow) || randomFollow === i + idMinPerson);
+
+                tabFollowers.push(randomFollow);
+            }
+
+            tabRelations.push({
+                influencer: i + idMinPerson,
+                follower: tabFollowers
+            })
+
+            tabFollowers = []
+        }
+
+        await session.close();
+
+        return tabRelations;
+    } catch (e) {
+        console.error(e);
+    }
 }
 
 const generateProductsData = (nbProducts) => {
@@ -57,7 +112,7 @@ const generateProductsData = (nbProducts) => {
     return tabProduct;
 }
 
-const generateProductsRelationsData = (tabPersons, maxIdProduct) => {
+const generateProductsRelationsDataMysql = (tabPersons, maxIdProduct) => {
     let relationTab = [];
     const nbRelationsMax = 5;
 
@@ -84,9 +139,60 @@ const generateProductsRelationsData = (tabPersons, maxIdProduct) => {
     return relationTab;
 }
 
+const generateOrders = async () => {
+    let tabOrders = [];
+
+    try {
+        const session = driver.session();
+        let query = 'MATCH (n:Person) RETURN count(n)';
+        let response = await session.run(query, {});
+        const nbPersons = _.get(response, 'records[0]._fields[0].low');
+
+        query = 'MATCH (n:Product) RETURN count(n)';
+        response = await session.run(query, {});
+        const nbProducts = _.get(response, 'records[0]._fields[0].low');
+
+        query = 'MATCH (n:Person) RETURN min(id(n))';
+        response = await session.run(query, {});
+        const minIdPerson = _.get(response, 'records[0]._fields[0].low');
+
+        query = 'MATCH (n:Product) RETURN min(id(n))';
+        response = await session.run(query, {});
+        const minIdProduct = _.get(response, 'records[0]._fields[0].low');
+
+        let ordersList = [];
+        let randomOrder;
+
+        for (let i = 0; i < nbPersons; i++) {
+            let numberOfOrder = Math.floor(Math.random() * 5);
+
+            for (let j = 0; j < numberOfOrder; j++) {
+                do {
+                    randomOrder = Math.floor(Math.random() * nbProducts) + minIdProduct;
+                } while (ordersList.includes(randomOrder) || randomOrder === i + nbProducts);
+
+                ordersList.push(randomOrder);
+            }
+
+            tabOrders.push({
+                idPerson: i + minIdPerson,
+                ordersList: ordersList
+            });
+
+            ordersList = [];
+        }
+
+        return tabOrders;
+    } catch (e) {
+        console.error(e);
+    }
+}
+
 module.exports = {
     generatePersonData,
-    generateRelationsData,
+    generateRelationsDataMysql,
     generateProductsData,
-    generateProductsRelationsData
+    generateProductsRelationsDataMysql,
+    generateRelationsDataNeo4j,
+    generateOrders
 }

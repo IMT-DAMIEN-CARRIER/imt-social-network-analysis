@@ -19,7 +19,7 @@ const generatePersonMysql = async (nbPerson) => {
     const tabPersons = DataGenerationService.generatePersonData(nbPerson);
     const durationInsertPersons = await MysqlRepository.insertPersons(tabPersons);
     const request = await MysqlRepository.getPersonMaxId();
-    const tabRelations = DataGenerationService.generateRelationsData(parseInt(request.query[0]['id']));
+    const tabRelations = DataGenerationService.generateRelationsDataMysql(parseInt(request.query[0]['id']));
     const durationInsertRelations = await MysqlRepository.insertRelations(tabRelations);
 
     return {
@@ -34,7 +34,7 @@ const generateProductMysql = async (nbProduct) => {
     const tabPersons = await MysqlRepository.findAllPersons();
     const request = await MysqlRepository.getProductMaxId();
 
-    const tabPurchases = DataGenerationService.generateProductsRelationsData(tabPersons.result.query, request.query[0]['id']);
+    const tabPurchases = DataGenerationService.generateProductsRelationsDataMysql(tabPersons.result.query, request.query[0]['id']);
     const durationInsertPurchase = await MysqlRepository.insertPurchase(tabPurchases);
 
     return {
@@ -45,26 +45,10 @@ const generateProductMysql = async (nbProduct) => {
 
 const generatePersonNeo4j = async (nbPerson, nbProduct) => {
     const tabPersons = DataGenerationService.generatePersonData(nbPerson);
-    const tabRelations = DataGenerationService.generateRelationsData(nbPerson);
-
-    const map = new Map();
-
-    tabRelations.forEach((item) => {
-        if (map.has(item.follower)) {
-            let element = map.get(item.follower);
-            element.push(item.followed);
-        } else {
-            map.set(item.follower, [item.followed]);
-        }
-    });
-
     const resultInsertPersons = await Neo4jRepository.insertObject(tabPersons, 'Person');
-    const resultInsertRelations = await Neo4jRepository.insertRelations(
-        map,
-        'Person',
-        'Person',
-        'Relation'
-    );
+
+    const tabRelations = await DataGenerationService.generateRelationsDataNeo4j();
+    const resultInsertRelations = await Neo4jRepository.insertRelations(tabRelations);
 
     if (nbProduct > 0) {
         const resultGenerationProduct = await ProductService.generateProductNeo4j(tabPersons, nbProduct);
