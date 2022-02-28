@@ -102,13 +102,14 @@ const getProductsOrderedByFollowers = async (profondeur, limit) => {
     };
 }
 
-const getProductsOrderedByFollowersAndByProduct = async (profondeur) => {
+const getProductsOrderedByFollowersAndByProduct = async (profondeur, idProduct) => {
     const requestInfluenceur = await MysqlRepository.getPersonMaxId();
-    let idInfluenceur, idProduct = 0;
     const maxId = requestInfluenceur.query[0]['id'];
 
-    if (requestInfluenceur.query[0]['id']) {
-        do {
+    let idInfluenceur = 0;
+
+    if (maxId) {
+        while (!idProduct) {
             idInfluenceur = Math.floor(Math.random() * maxId + 1);
 
             // On récupère la liste des produits pour l'influenceur aléatoire
@@ -117,7 +118,7 @@ const getProductsOrderedByFollowersAndByProduct = async (profondeur) => {
             // On tire au sort l'un des produits de l'influenceur
             const randomIdProduct = Math.floor(Math.random() * tabProduct.query.length);
             idProduct = tabProduct.query[randomIdProduct]?.id;
-        } while (!idProduct);
+        }
     }
 
     return {
@@ -127,13 +128,15 @@ const getProductsOrderedByFollowersAndByProduct = async (profondeur) => {
     };
 }
 
-const getProductVirality = async (profondeur) => {
-    // On récupère la liste des produits pour l'influenceur aléatoire
-    const maxProduct = await MysqlRepository.getProductMaxId();
-    const maxId = maxProduct.query[0]['id'];
+const getProductVirality = async (profondeur, idProduct) => {
+    if (!idProduct) {
+        // On récupère la liste des produits pour l'influenceur aléatoire
+        const maxProduct = await MysqlRepository.getProductMaxId();
+        const maxId = maxProduct.query[0]['id'];
 
-    // On tire au sort l'un des produits de l'influenceur
-    const idProduct = Math.floor(Math.random() * maxId + 1);
+        // On tire au sort l'un des produits de l'influenceur
+        idProduct = Math.floor(Math.random() * maxId + 1);
+    }
 
     return {
         'idProduct': idProduct,
