@@ -51,7 +51,7 @@ const generatePersonNeo4j = async (nbPerson, nbProduct) => {
     const resultInsertRelations = await Neo4jRepository.insertRelations(tabRelations);
 
     if (nbProduct > 0) {
-        const resultGenerationProduct = await ProductService.generateProductNeo4j(tabPersons, nbProduct);
+        const resultGenerationProduct = await ProductService.generateProductNeo4j(nbProduct);
 
         return {
             resultInsertPersons,
@@ -64,6 +64,14 @@ const generatePersonNeo4j = async (nbPerson, nbProduct) => {
         resultInsertPersons,
         resultInsertRelations,
     };
+}
+
+const generateProductNeo4j = async (nbProduct) => {
+    const resultGenerationProduct = await ProductService.generateProductNeo4j(nbProduct);
+
+    return {
+        resultGenerationProduct
+    }
 }
 
 const findAllPerson = async () => {
@@ -133,6 +141,7 @@ module.exports = {
     generatePersonMysql,
     generateProductMysql,
     generatePersonNeo4j,
+    generateProductNeo4j,
     findAllPerson,
     getProductsOrderedByFollowers,
     getProductsOrderedByFollowersAndByProduct,
