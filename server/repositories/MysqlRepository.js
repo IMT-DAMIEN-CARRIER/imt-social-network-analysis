@@ -366,7 +366,7 @@ const getProductsOrderedByFollowersAndByProductMysql = async (idInfluencer, idPr
     return await executeQuery(request);
 }
 
-const getProductViralityMysql = async (idProduct, depth) => {
+const getProductViralityMysql = async (idInfluencer, idProduct, depth) => {
     if (!idProduct) {
         return {
             status: '500',
@@ -377,29 +377,28 @@ const getProductViralityMysql = async (idProduct, depth) => {
     let request = `SELECT pr.productName, COUNT(o.id_person) AS 'nbOrder'
             FROM product pr
             JOIN orders o ON pr.id=o.id_product
-            WHERE pr.id=` + idProduct;
+            WHERE pr.id=` + idProduct + ' AND (o.id_person=' + idInfluencer;
 
     if (depth > 0) {
-        request += ' AND O.id_person IN ';
+        for (let counter = 1; counter <= depth; counter++) {
+            request += ' OR o.id_person IN ';
 
-        for (let i = 1; i < depth; i++) {
-            request += `(SELECT r.id_influencer
+            for (let i = 1; i < counter; i++) {
+                request += `
+                (SELECT r.id_follower
                 FROM relation r
-                JOIN orders o ON r.id_follower=o.id_person
-                JOIN product pr ON o.id_product=pr.id
-                WHERE pr.id=` + idProduct + ' AND r.id_influencer IN ';
+                WHERE r.id_influencer IN `;
+            }
+
+            request += `(SELECT r.id_follower
+                FROM relation r
+                WHERE r.id_influencer=` + idInfluencer + ')';
+
+            request += ')'.repeat(counter - 1);
         }
-
-        request += `(SELECT r.id_influencer
-                FROM relation r
-                JOIN orders o ON r.id_follower=o.id_person
-                JOIN product pr ON o.id_product=pr.id
-                WHERE pr.id=` + idProduct;
-
-        request += ')'.repeat(depth);
     }
 
-    request += ' GROUP BY pr.id';
+    request += ') GROUP BY pr.id';
 
     return await executeQuery(request);
 }

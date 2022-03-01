@@ -121,16 +121,28 @@ const getProductsOrderedByFollowersAndByProductMysql = async (profondeur) => {
 }
 
 const getProductViralityMysql = async (profondeur) => {
-    // On récupère la liste des produits pour l'influenceur aléatoire
-    const maxProduct = await MysqlRepository.getProductMaxId();
-    const maxId = maxProduct.data[0]['id'];
+    const requestInfluenceur = await MysqlRepository.getPersonMaxId();
+    const maxId = requestInfluenceur.data[0]['id'];
 
-    // On tire au sort l'un des produits de l'influenceur
-    const idProduct = Math.floor(Math.random() * maxId + 1);
+    let idInfluenceur, idProduct = 0;
+
+    if (maxId) {
+        while (!idProduct) {
+            idInfluenceur = Math.floor(Math.random() * maxId + 1);
+
+            // On récupère la liste des produits pour l'influenceur aléatoire
+            const tabProduct = await MysqlRepository.getProductByInfluencer(idInfluenceur);
+
+            // On tire au sort l'un des produits de l'influenceur
+            const randomIdProduct = Math.floor(Math.random() * tabProduct.data.length);
+            idProduct = tabProduct.data[randomIdProduct]?.id;
+        }
+    }
 
     return {
-        'idProduct': idProduct,
-        'result': await MysqlRepository.getProductViralityMysql(idProduct, profondeur)
+        idProduct: idProduct,
+        idInfluencer: idInfluenceur,
+        result: await MysqlRepository.getProductViralityMysql(idInfluenceur, idProduct, profondeur)
     }
 }
 
