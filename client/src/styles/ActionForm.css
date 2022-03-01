@@ -8,6 +8,9 @@
     border-radius: 10px;
     border-color: #9F9993;
     transition-duration: 0.6s;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
 }
 
 .form-container {
