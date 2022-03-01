@@ -2,8 +2,11 @@ const express = require('express')
 const {
     generatePersonMysql,
     generateProductMysql,
-    findAllPerson, generateDataMysql, getProductsOrderedByFollowers, getProductsOrderedByFollowersAndByProduct,
-    getProductVirality
+    findAllPerson,
+    generateDataMysql,
+    getProductsOrderedByFollowersMysql,
+    getProductsOrderedByFollowersAndByProductMysql,
+    getProductViralityMysql
 } = require('../../services/PersonService');
 const {createMysqlStructure} = require('../../repositories/MysqlRepository');
 const router = express.Router();
@@ -62,23 +65,23 @@ router.get('/person/get/product-ordered-from-followers-by-influencer', async (re
     const {profondeur, limit} = req.query;
     const limitReq = !limit ? 5 : limit;
 
-    getProductsOrderedByFollowers(profondeur, limitReq).then((response) => {
+    getProductsOrderedByFollowersMysql(profondeur, limitReq).then((response) => {
         res.json(response);
     });
 });
 
 router.get('/person/get/product-ordered-from-followers-by-influencer-by-product', async (req, res) => {
-    const {profondeur, idProduct} = req.query;
+    const {profondeur} = req.query;
 
-    getProductsOrderedByFollowersAndByProduct(profondeur, idProduct).then((response) => {
+    getProductsOrderedByFollowersAndByProductMysql(profondeur).then((response) => {
         res.json(response);
     });
 });
 
 router.get('/person/get/product-virality', async (req, res) => {
-    const {profondeur, idProduct} = req.query;
+    const {profondeur} = req.query;
 
-    getProductVirality(profondeur, idProduct).then((response) => {
+    getProductViralityMysql(profondeur).then((response) => {
         res.json(response);
     })
 })

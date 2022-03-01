@@ -9,6 +9,7 @@ type Props = {
 }
 
 const ActionForm = (props: Props) => {
+    let form;
     const [selectedRequest, setSelectedRequest] = useState<string>(RequestName.REQUEST_ONE);
     const [selectedTypeInsert, setSelectedTypeInsert] = useState('person');
 
@@ -27,11 +28,13 @@ const ActionForm = (props: Props) => {
     }
 
     function changeNbInsert(nbInsert: number) {
-        props.change(StateChanger.NB_INSERT, nbInsert);
-    }
-
-    function changeIdProduct(idProduct: number) {
-        props.change(StateChanger.ID_PRODUCT, idProduct);
+        if (selectedTypeInsert === 'person') {
+            props.change(StateChanger.NB_INSERT_PERSON, nbInsert);
+            props.change(StateChanger.NB_INSERT_PRODUCT, 0);
+        } else {
+            props.change(StateChanger.NB_INSERT_PRODUCT, nbInsert);
+            props.change(StateChanger.NB_INSERT_PERSON, 0);
+        }
     }
 
     function changeDepth(depth: number) {
@@ -51,8 +54,8 @@ const ActionForm = (props: Props) => {
                         <input type="radio"
                                id="insert-choice-1"
                                name="contact"
-                               value="user"
-                               checked={selectedTypeInsert === "user"}
+                               value="person"
+                               checked={selectedTypeInsert === "person"}
                                onChange={(e) => changeSelectedTypeInsert(e.target.value)}
                         />
                         <label htmlFor="insert-choice-1">Utilisateurs</label>
@@ -77,8 +80,8 @@ const ActionForm = (props: Props) => {
             </div>
         )
     } else if (props.action === 'select') {
-        if (selectedRequest == RequestName.REQUEST_ONE) {
-            var form =
+        if (selectedRequest === RequestName.REQUEST_ONE) {
+            form =
                 <>
                     <h3>Requête 1</h3>
                     <p>{titleReq1}</p>
@@ -104,7 +107,7 @@ const ActionForm = (props: Props) => {
                     </div>
                 </>;
         } else if (selectedRequest === RequestName.REQUEST_TWO) {
-            var form =
+            form =
                 <>
                     <h3>Requête 2</h3>
                     <p>{titleReq2}</p>
@@ -119,21 +122,10 @@ const ActionForm = (props: Props) => {
                                 onChange={(e) => changeDepth(+e.target.value)}
                             />
                         </div>
-                        <br/>
-                        <div>
-                            <label htmlFor="insert-number">Produit ciblé : </label>
-                            <input
-                                type="text"
-                                id="product"
-                                name="product"
-                                required placeholder="Laissez vide ou 0 si vous voulez un produit aléatoire"
-                                onChange={(e) => changeIdProduct(+e.target.value)}
-                            />
-                        </div>
                     </div>
                 </>;
         } else if (selectedRequest === RequestName.REQUEST_THREE) {
-            var form =
+            form =
                 <>
                     <h3>Requête 3</h3>
                     <p>{titleReq3}</p>
@@ -148,23 +140,11 @@ const ActionForm = (props: Props) => {
                                 onChange={(e) => changeDepth(+e.target.value)}
                             />
                         </div>
-                        <br/>
-                        <div>
-                            <label htmlFor="insert-number">Produit ciblé : </label>
-                            <input
-                                type="text"
-                                id="product"
-                                name="product"
-                                required
-                                placeholder="Laissez vide ou 0 si vous voulez un produit aléatoire"
-                                onChange={(e) => changeIdProduct(+e.target.value)}
-                            />
-                        </div>
                     </div>
                 </>;
 
         } else {
-            var form = <h3>error</h3>;
+            form = <h3>error</h3>;
         }
 
         return (

@@ -19,7 +19,7 @@ const executeQuery = async (query) => {
 
         return {
             'status': '200',
-            'query': result,
+            'data': result,
             'time': dureeExec
         }
     } catch (error) {
@@ -317,7 +317,7 @@ const generateRequestSelectOneAndTwo = (request, depth, idInfluencer) => {
     return request
 }
 
-const getProductsOrderedByFollowers = async (idInfluencer, depth, limit) => {
+const getProductsOrderedByFollowersMysql = async (idInfluencer, depth, limit) => {
     if (idInfluencer === 0) {
         return {
             status: '500',
@@ -338,7 +338,7 @@ const getProductsOrderedByFollowers = async (idInfluencer, depth, limit) => {
     return await executeQuery(request);
 }
 
-const getProductsOrderedByFollowersAndByProduct = async (idInfluencer, idProduct, depth) => {
+const getProductsOrderedByFollowersAndByProductMysql = async (idInfluencer, idProduct, depth) => {
     if (!idInfluencer) {
         return {
             'status': '500',
@@ -366,11 +366,11 @@ const getProductsOrderedByFollowersAndByProduct = async (idInfluencer, idProduct
     return await executeQuery(request);
 }
 
-const getProductVirality = async (idProduct, depth) => {
+const getProductViralityMysql = async (idProduct, depth) => {
     if (!idProduct) {
         return {
-            'status': '500',
-            'data': 'Error 500 : product'
+            status: '500',
+            data: 'Error 500 : product'
         };
     }
 
@@ -414,7 +414,7 @@ module.exports = {
     getProductMaxId,
     findAllPersons,
     getProductByInfluencer,
-    getProductsOrderedByFollowers,
-    getProductsOrderedByFollowersAndByProduct,
-    getProductVirality
+    getProductsOrderedByFollowersMysql,
+    getProductsOrderedByFollowersAndByProductMysql,
+    getProductViralityMysql
 }

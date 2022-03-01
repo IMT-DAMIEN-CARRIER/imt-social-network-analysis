@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import '../styles/Switch.css'
 import {StateChanger} from "./Main";
 
@@ -11,29 +11,28 @@ const Switch = (props: Props) => {
     const MARIA_DB: string = 'MariaDB';
     const NEO4J: string = 'Neo4j';
 
-    const [neo4jselected, setNeo4JSelected] = useState(false);
+    const [neo4jSelected, setNeo4jSelected] = useState(false);
 
     function switchDatabaseState() {
-        setNeo4JSelected(!neo4jselected);
-        changetypeDB('MariaDB');
-
-        if (neo4jselected) {
-            changetypeDB('Neo4j');
-        }
+        setNeo4jSelected(!neo4jSelected);
     }
 
-    function changetypeDB(dbType: string) {
+    useEffect(() => {
+        changeTypeDB(neo4jSelected ? NEO4J : MARIA_DB);
+    }, [neo4jSelected])
+
+    function changeTypeDB(dbType: string) {
         props.change(StateChanger.DB_TYPE, dbType);
     }
 
     return (
         <div className='button' onClick={switchDatabaseState}>
             <div
-                className={`switch-btn ${!neo4jselected ? 'button-selected-element' : 'rotate-button-selected-element'}`}>
-                <p>{!neo4jselected ? MARIA_DB : NEO4J}</p>
+                className={`switch-btn ${!neo4jSelected ? 'button-selected-element' : 'rotate-button-selected-element'}`}>
+                <p>{!neo4jSelected ? MARIA_DB : NEO4J}</p>
             </div>
-            <div className={`switch-btn ${!neo4jselected ? 'not-selected-element' : 'rotate-not-selected-element'}`}>
-                <p>{!neo4jselected ? NEO4J : MARIA_DB}</p>
+            <div className={`switch-btn ${!neo4jSelected ? 'not-selected-element' : 'rotate-not-selected-element'}`}>
+                <p>{!neo4jSelected ? NEO4J : MARIA_DB}</p>
             </div>
         </div>
     )
