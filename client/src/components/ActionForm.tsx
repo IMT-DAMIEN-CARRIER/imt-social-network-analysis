@@ -2,10 +2,13 @@ import React, {useState} from 'react';
 import '../styles/ActionForm.css'
 import {RequestName, StateChanger} from "./Main";
 import RequestBtn from "./RequestBtn";
+import {Button} from "@chakra-ui/react";
 
 type Props = {
     action: string;
     change: (action: StateChanger, value: any) => void;
+    click: () => void;
+    isLoading: boolean;
 }
 
 const ActionForm = (props: Props) => {
@@ -76,6 +79,9 @@ const ActionForm = (props: Props) => {
                         placeholder="100"
                         onChange={(e) => changeNbInsert(+e.target.value)}
                     />
+                </div>
+                <div className="Actions-Btn-Container">
+                    <Button mt={4} className="Btn" onClick={props.click} isLoading={props.isLoading}>Récupérer</Button>
                 </div>
             </div>
         )
@@ -168,6 +174,9 @@ const ActionForm = (props: Props) => {
                     </div>
                 </div>
                 {form}
+                <div className="Actions-Btn-Container">
+                    <Button mt={4} className="Btn" onClick={props.click} isLoading={props.isLoading}>Récupérer</Button>
+                </div>
             </div>
         )
     } else {

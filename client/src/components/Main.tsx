@@ -6,7 +6,6 @@ import Switch from './Switch';
 import ClearButton from './ClearButton';
 import InsertBtn from './InsertBtn';
 import SelectBtn from './SelectBtn';
-import RunButton from './RunButton';
 import ActionForm from './ActionForm';
 import {switchTypeRequest} from '../service/utils';
 
@@ -37,6 +36,7 @@ const Main = () => {
     const [limit, setLimit] = useState<number>(5);
     const [nbInsertPerson, setNbInsertPerson] = useState<number>(0);
     const [nbInsertProduct, setNbInsertProduct] = useState<number>(0);
+    const [loading, setLoading] = useState<boolean>(false);
 
     function handleChangeResult(newResult: string) {
         setResult(newResult);
@@ -51,6 +51,7 @@ const Main = () => {
     }
 
     async function handleRunRequest() {
+        setLoading(true);
         const response = await switchTypeRequest(
             dbType,
             typeRequest,
@@ -152,6 +153,7 @@ const Main = () => {
         }
 
         setResult(JSON.stringify(res, null, 2));
+        setLoading(false);
     }
 
     function handleSubmit(action: StateChanger, value: any) {
@@ -201,12 +203,7 @@ const Main = () => {
                 </div>
             </div>
             <div className="Action-Form">
-                <ActionForm action={formState} change={handleSubmit}/>
-            </div>
-            <div className="Actions-Btn-Container">
-                <RunButton
-                    click={handleRunRequest}
-                />
+                <ActionForm action={formState} change={handleSubmit} click={handleRunRequest} isLoading={loading}/>
             </div>
             <div className="Result-display">
                 <Results result={result} onChange={handleChangeResult}/>
