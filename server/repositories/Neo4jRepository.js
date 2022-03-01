@@ -13,8 +13,7 @@ const getAllDatas = async () => {
 
     await session
         .run('Match(n) RETURN n')
-        .then(function (result) {
-            console.log(result.records);
+        .then(function () {
             session.close();
         })
         .catch((error) => {
@@ -78,7 +77,7 @@ const insertObject = async function (arrayObject, tableName) {
         return {
             status: 200,
             data: dataString,
-            time_person: timeCreation / 1000
+            time: timeCreation / 1000
         };
     } catch (error) {
         console.error(error);
@@ -149,7 +148,11 @@ const insertOrders = async (tabOrders) => {
         const duration = (end - start) / 1000;
         await session.close();
 
-        return {time_creation_orders: duration};
+        return {
+            status: 200,
+            time: duration,
+            data: {}
+        };
     } catch (error) {
         console.error(error);
 
@@ -161,15 +164,17 @@ const insertOrders = async (tabOrders) => {
     }
 }
 
-const getProductsOrderedByFollowers = async (influencer, depth) => {
+const getProductsOrderedByFollowersNeo4j = async (influencer, depth, limit) => {
     let products = [];
 
     try {
         const session = driver.session();
-        const query = ` MATCH (:Person {firstname: '${influencer.firstname}', lastname: '${influencer.lastname}'})<-[:Relation *1..${depth}]-(p:Person)
+        depth++
+        const query = ` MATCH (:Person {firstname: "${influencer.firstName}", lastname: "${influencer.lastName}"})<-[:Relation *1..${depth}]-(p:Person)
               WITH DISTINCT p
               MATCH (p)-[:Order]->(n:Product)
-              RETURN n.name, COUNT(*)`;
+              RETURN n.productName, COUNT(*)
+              LIMIT ${limit}`;
 
         const start = Date.now();
         const data = await session.run(query, {});
@@ -188,8 +193,9 @@ const getProductsOrderedByFollowers = async (influencer, depth) => {
 
         return {
             status: 200,
-            time: duration,
-            data: products
+            time: duration / 1000,
+            influencer: influencer.firstName + ' ' + influencer.lastName,
+            result: products
         }
     } catch (e) {
         console.error(e);
@@ -202,30 +208,33 @@ const getProductsOrderedByFollowers = async (influencer, depth) => {
     }
 }
 
-const getProductsOrderedByFollowersAndByProduct = async (influencer, productName, depth) => {
+const getProductsOrderedByFollowersAndByProductNeo4j = async (influencer, productName, depth) => {
     try {
         const session = driver.session();
-        const query = ` MATCH (:Person{firstname: '${influencer.firstname}', lastname: '${influencer.lastname}'})<-[:Relation *1..${depth}]-(p:Person)
+        depth++;
+        const query = ` MATCH (:Person{firstname: "${influencer.firstName}", lastname: "${influencer.lastName}"})<-[:Relation *1..${depth}]-(p:Person)
                   WITH DISTINCT p
-                  MATCH (p)-[:Order]->(n:Product{name: '${productName}'})
-                  RETURN n.name, COUNT(*)`;
+                  MATCH (p)-[:Order]->(n:Product {productName: "${productName}"})
+                  RETURN n.productName, COUNT(*)`;
 
         const start = Date.now();
         const data = await session.run(query, {});
-        const count = data.records[0].get(1);
+        let count = 0;
+
+        if (data.records[0]) {
+            count = data.records[0].get(1);
+            count = count.low
+        }
+
         await session.close();
         const duration = Date.now() - start;
 
-        const results = {
-            name: productName,
-            influenceur: influencer.firstname + ' ' + influencer.lastname,
-            nbOrders: count.low
-        }
-
         return {
             status: 200,
-            time: duration,
-            data: results
+            time: duration / 1000,
+            productName: productName,
+            influencer: influencer.firstName + ' ' + influencer.lastName,
+            nbOrders: count
         }
     } catch (e) {
         console.error(e);
@@ -238,13 +247,14 @@ const getProductsOrderedByFollowersAndByProduct = async (influencer, productName
     }
 }
 
-const getProductVirality = async (productName, depth) => {
+const getProductViralityNeo4j = async (productName, depth) => {
     try {
         const session = driver.session();
+        depth++;
 
-        const query = ` MATCH(:Product {name:'${productName}'})<-[:Order]-(:Person)<-[:Relation *1..${depth}]-(p:Person)
+        const query = ` MATCH(:Product {productName:"${productName}"})<-[:Order]-(:Person)<-[:Relation *1..${depth}]-(p:Person)
               WITH DISTINCT p
-              MATCH (p)-[n:Order]->(:Product {name:'${productName}'})
+              MATCH (p)-[n:Order]->(:Product {productName:'${productName}'})
               RETURN COUNT (n)`;
 
         const start = Date.now();
@@ -253,15 +263,11 @@ const getProductVirality = async (productName, depth) => {
         const duration = Date.now() - start;
         await session.close();
 
-        const result = {
-            productName: productName,
-            nbOrders: nbOrders
-        }
-
         return {
             status: 200,
-            time: duration,
-            data: result
+            time: duration / 1000,
+            productName: productName,
+            nbOrders: nbOrders
         }
     } catch (e) {
         console.error(e);
@@ -280,7 +286,7 @@ module.exports = {
     clearTable,
     insertRelations,
     insertOrders,
-    getProductsOrderedByFollowers,
-    getProductsOrderedByFollowersAndByProduct,
-    getProductVirality
+    getProductsOrderedByFollowersNeo4j,
+    getProductsOrderedByFollowersAndByProductNeo4j,
+    getProductViralityNeo4j
 }

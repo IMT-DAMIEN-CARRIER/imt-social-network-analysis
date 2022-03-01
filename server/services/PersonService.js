@@ -19,7 +19,7 @@ const generatePersonMysql = async (nbPerson) => {
     const tabPersons = DataGenerationService.generatePersonData(nbPerson);
     const durationInsertPersons = await MysqlRepository.insertPersons(tabPersons);
     const request = await MysqlRepository.getPersonMaxId();
-    const tabRelations = DataGenerationService.generateRelationsDataMysql(parseInt(request.query[0]['id']));
+    const tabRelations = DataGenerationService.generateRelationsDataMysql(parseInt(request.data[0]['id']));
     const durationInsertRelations = await MysqlRepository.insertRelations(tabRelations);
 
     return {
@@ -34,7 +34,7 @@ const generateProductMysql = async (nbProduct) => {
     const tabPersons = await MysqlRepository.findAllPersons();
     const request = await MysqlRepository.getProductMaxId();
 
-    const tabPurchases = DataGenerationService.generateProductsRelationsDataMysql(tabPersons.result.query, request.query[0]['id']);
+    const tabPurchases = DataGenerationService.generateProductsRelationsDataMysql(tabPersons.result.query, request.data[0]['id']);
     const durationInsertPurchase = await MysqlRepository.insertPurchase(tabPurchases);
 
     return {
@@ -80,25 +80,25 @@ const findAllPerson = async () => {
     return {"resultFindAllPersons": resultFindAllPersons.result.query}
 }
 
-const getProductsOrderedByFollowers = async (profondeur, limit) => {
+const getProductsOrderedByFollowersMysql = async (profondeur, limit) => {
     const request = await MysqlRepository.getPersonMaxId();
     let idInfluenceur = 0;
 
-    if (request.query[0]['id']) {
-        idInfluenceur = Math.floor(Math.random() * request.query[0]['id'] + 1);
+    if (request.data[0]['id']) {
+        idInfluenceur = Math.floor(Math.random() * request.data[0]['id'] + 1);
     }
 
     return {
         'idInfluenceur': idInfluenceur,
-        'result': await MysqlRepository.getProductsOrderedByFollowers(idInfluenceur, profondeur, limit)
+        'result': await MysqlRepository.getProductsOrderedByFollowersMysql(idInfluenceur, profondeur, limit)
     };
 }
 
-const getProductsOrderedByFollowersAndByProduct = async (profondeur, idProduct) => {
+const getProductsOrderedByFollowersAndByProductMysql = async (profondeur) => {
     const requestInfluenceur = await MysqlRepository.getPersonMaxId();
-    const maxId = requestInfluenceur.query[0]['id'];
+    const maxId = requestInfluenceur.data[0]['id'];
 
-    let idInfluenceur = 0;
+    let idInfluenceur, idProduct = 0;
 
     if (maxId) {
         while (!idProduct) {
@@ -108,31 +108,29 @@ const getProductsOrderedByFollowersAndByProduct = async (profondeur, idProduct) 
             const tabProduct = await MysqlRepository.getProductByInfluencer(idInfluenceur);
 
             // On tire au sort l'un des produits de l'influenceur
-            const randomIdProduct = Math.floor(Math.random() * tabProduct.query.length);
-            idProduct = tabProduct.query[randomIdProduct]?.id;
+            const randomIdProduct = Math.floor(Math.random() * tabProduct.data.length);
+            idProduct = tabProduct.data[randomIdProduct]?.id;
         }
     }
 
     return {
         'idInfluenceur': idInfluenceur,
         'idProduct': idProduct,
-        'result': await MysqlRepository.getProductsOrderedByFollowersAndByProduct(idInfluenceur, idProduct, profondeur)
+        'result': await MysqlRepository.getProductsOrderedByFollowersAndByProductMysql(idInfluenceur, idProduct, profondeur)
     };
 }
 
-const getProductVirality = async (profondeur, idProduct) => {
-    if (!idProduct) {
-        // On récupère la liste des produits pour l'influenceur aléatoire
-        const maxProduct = await MysqlRepository.getProductMaxId();
-        const maxId = maxProduct.query[0]['id'];
+const getProductViralityMysql = async (profondeur) => {
+    // On récupère la liste des produits pour l'influenceur aléatoire
+    const maxProduct = await MysqlRepository.getProductMaxId();
+    const maxId = maxProduct.data[0]['id'];
 
-        // On tire au sort l'un des produits de l'influenceur
-        idProduct = Math.floor(Math.random() * maxId + 1);
-    }
+    // On tire au sort l'un des produits de l'influenceur
+    const idProduct = Math.floor(Math.random() * maxId + 1);
 
     return {
         'idProduct': idProduct,
-        'result': await MysqlRepository.getProductVirality(idProduct, profondeur)
+        'result': await MysqlRepository.getProductViralityMysql(idProduct, profondeur)
     }
 }
 
@@ -143,7 +141,7 @@ module.exports = {
     generatePersonNeo4j,
     generateProductNeo4j,
     findAllPerson,
-    getProductsOrderedByFollowers,
-    getProductsOrderedByFollowersAndByProduct,
-    getProductVirality
+    getProductsOrderedByFollowersMysql,
+    getProductsOrderedByFollowersAndByProductMysql,
+    getProductViralityMysql
 }

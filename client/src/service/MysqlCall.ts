@@ -1,23 +1,32 @@
 import axios, {AxiosResponse} from 'axios';
 
-export const insertMysql = async (entity: string, nbInsert: number): Promise<AxiosResponse> => {
-    let url = 'http://localhost:5050/mysql';
+const urlLocal = 'http://localhost:5050/mysql';
+
+export const insertMysql = async (entity: string, nbInsertPerson: number, nbInsertProduct: number): Promise<AxiosResponse> => {
+    let url = urlLocal;
+    let params;
 
     if ('person' === entity) {
         url += '/person';
+        params = {
+            nbPerson: nbInsertPerson
+        }
     } else {
         url += '/product';
+        params = {
+            nbProduct: nbInsertProduct
+        }
     }
 
     return await axios.post(
         url + '/add',
-        {params: {nbProduct: nbInsert}}
+        {params}
     );
 }
 
-export const requestOne = async (depth: number, limit: number): Promise<AxiosResponse> => {
+export const requestOneMysql = async (depth: number, limit: number): Promise<AxiosResponse> => {
     return await axios.get(
-        'http://localhost:5050/mysql/person/get/product-ordered-from-followers-by-influencer',
+        urlLocal + '/person/get/product-ordered-from-followers-by-influencer',
         {
             params: {
                 profondeur: depth,
@@ -27,25 +36,23 @@ export const requestOne = async (depth: number, limit: number): Promise<AxiosRes
     );
 }
 
-export const requestTwo = async (depth: number, idProduct: number): Promise<AxiosResponse> => {
+export const requestTwoMysql = async (depth: number): Promise<AxiosResponse> => {
     return await axios.get(
-        'http://localhost:5050/mysql/person/get/product-ordered-from-followers-by-influencer-by-product',
+        urlLocal + '/person/get/product-ordered-from-followers-by-influencer-by-product',
         {
             params: {
-                profondeur: depth,
-                idProduct: idProduct
+                profondeur: depth
             }
         }
     );
 }
 
-export const requestThree = async (depth: number, idProduct: number): Promise<AxiosResponse> => {
+export const requestThreeMysql = async (depth: number): Promise<AxiosResponse> => {
     return await axios.get(
-        'http://localhost:5050/mysql/person/get/product-virality',
+        urlLocal + '/person/get/product-virality',
         {
             params: {
-                profondeur: depth,
-                idProduct: idProduct
+                profondeur: depth
             }
         }
     );

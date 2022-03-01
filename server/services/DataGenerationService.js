@@ -160,6 +160,8 @@ const generateOrders = async () => {
         response = await session.run(query, {});
         const minIdProduct = _.get(response, 'records[0]._fields[0].low');
 
+        await session.close();
+
         let ordersList = [];
         let randomOrder;
 
@@ -188,11 +190,67 @@ const generateOrders = async () => {
     }
 }
 
+const getRandomProductName = async () => {
+    try {
+        const session = driver.session();
+
+        let query = 'MATCH (n:Product) RETURN count(n)';
+        let response = await session.run(query, {});
+        const nbProducts = _.get(response, 'records[0]._fields[0].low');
+
+        query = 'MATCH (n:Product) RETURN min(id(n))';
+        response = await session.run(query, {});
+        const minIdProduct = _.get(response, 'records[0]._fields[0].low');
+
+        const randomProduct = Math.floor(Math.random() * nbProducts) + minIdProduct;
+
+        query = 'MATCH (n:Product) WHERE ID(n) = ' + randomProduct + ' RETURN n';
+        response = await session.run(query, {});
+
+        const productName = _.get(response, 'records[0]._fields[0].properties.productName');
+        await session.close();
+
+        return productName;
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+const getRandomPerson = async () => {
+    try {
+        const session = driver.session();
+
+        let query = 'MATCH (n:Person) RETURN count(n)';
+        let response = await session.run(query, {});
+        const nbPersons = _.get(response, 'records[0]._fields[0].low');
+
+        query = 'MATCH (n:Person) RETURN min(id(n))';
+        response = await session.run(query, {});
+        const minIdPerson = _.get(response, 'records[0]._fields[0].low');
+
+        const randomUser = Math.floor(Math.random() * nbPersons) + minIdPerson;
+
+        query = 'MATCH (n:Person) WHERE ID(n) = ' + randomUser + ' RETURN n';
+        response = await session.run(query, {});
+
+        const firstname = _.get(response, 'records[0]._fields[0].properties.firstname');
+        const lastname = _.get(response, 'records[0]._fields[0].properties.lastname');
+        const influencer = new Person(firstname, lastname);
+        await session.close();
+
+        return influencer;
+    } catch (e) {
+        console.error(e);
+    }
+}
+
 module.exports = {
     generatePersonData,
     generateRelationsDataMysql,
     generateProductsData,
     generateProductsRelationsDataMysql,
     generateRelationsDataNeo4j,
-    generateOrders
+    generateOrders,
+    getRandomProductName,
+    getRandomPerson
 }

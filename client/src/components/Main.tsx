@@ -11,13 +11,13 @@ import ActionForm from './ActionForm';
 import {switchTypeRequest} from '../service/utils';
 
 export enum StateChanger {
-    NB_INSERT = 'NB_INSERT',
     ENTITY = 'ENTITY',
     TYPE_REQUEST = 'TYPE_REQUEST',
     DEPTH = 'DEPTH',
-    ID_PRODUCT = 'ID_PRODUCT',
     DB_TYPE = 'DB_TYPE',
-    LIMIT = 'LIMIT'
+    LIMIT = 'LIMIT',
+    NB_INSERT_PERSON = 'NB_INSERT_PERSON',
+    NB_INSERT_PRODUCT = 'NB_INSERT_PRODUCT'
 }
 
 export enum RequestName {
@@ -32,11 +32,11 @@ const Main = () => {
     const [formState, setFormState] = useState<string>('hidden');
     const [typeRequest, setTypeRequest] = useState<string>(RequestName.INSERT);
     const [entity, setEntity] = useState<string>('person');
-    const [nbInsert, setNbInsert] = useState<number>(0);
     const [depth, setDepth] = useState<number>(0);
-    const [idProduct, setIdProduct] = useState<number>(0);
     const [dbType, setDbType] = useState<string>('MariaDB');
     const [limit, setLimit] = useState<number>(5);
+    const [nbInsertPerson, setNbInsertPerson] = useState<number>(0);
+    const [nbInsertProduct, setNbInsertProduct] = useState<number>(0);
 
     function handleChangeResult(newResult: string) {
         setResult(newResult);
@@ -50,24 +50,100 @@ const Main = () => {
         setResult('');
     }
 
-    async function handleRunRequest(dbType: string, typeRequest: string, entity: string, nbInsert: number, depth: number, idProduct: number, limit: number) {
-        const response = await switchTypeRequest(dbType, typeRequest, entity, nbInsert, depth, idProduct, limit);
+    async function handleRunRequest() {
+        const response = await switchTypeRequest(
+            dbType,
+            typeRequest,
+            entity,
+            depth,
+            limit,
+            nbInsertPerson,
+            nbInsertProduct
+        );
+
         let res;
 
         if (response) {
-            if (RequestName.REQUEST_ONE === typeRequest) {
+            if ('MariaDB' === dbType) {
+                switch (typeRequest) {
+                    case RequestName.INSERT:
+                        if ('person' === entity) {
+                            res = {
+                                durationInsertPersons: response.data.result.durationInsertPersons,
+                                durationInsertRelations: response.data.result.durationInsertRelations,
+                            }
+                        } else {
+                            res = {
+                                durationInsertProducts: response.data.result.durationInsertProducts,
+                                durationInsertPurchase: response.data.result.durationInsertPurchase
+                            }
+                        }
+
+                        break;
+                    case RequestName.REQUEST_ONE:
+                        res = {
+                            status: response.data.result.status,
+                            time: response.data.result.time + 's',
+                            influenceur: response.data.idInfluenceur,
+                            data: response.data.result.data
+                        };
+
+                        break;
+                    case RequestName.REQUEST_TWO:
+                        res = {
+                            status: response.data.result.status,
+                            time: response.data.result.time + 's',
+                            influenceur: response.data.idInfluenceur,
+                            product: response.data.idProduct,
+                            nbOrders: response.data.result.data[0].nbOrders
+                        };
+
+                        break;
+                    case RequestName.REQUEST_THREE:
+                        res = {
+                            status: response.data.result.status,
+                            time: response.data.result.time + 's',
+                            idProduct: response.data.idProduct,
+                            data: response.data.result.data
+                        };
+
+                        break;
+                }
+            } else {
                 res = {
-                    time: response.data.result.time + 's',
-                    influenceur: response.data.idInfluenceur,
-                    data: response.data.result.query
+                    status: response.data.status,
+                    time: response.data.time + 's'
                 };
-            } else if (RequestName.REQUEST_TWO === typeRequest) {
-                res = {
-                    time: response.data.result.time + 's',
-                    influenceur: response.data.idInfluenceur,
-                    product: response.data.idProduct,
-                    data: response.data.result.query
-                };
+
+                switch (typeRequest) {
+                    case RequestName.INSERT:
+                        break;
+                    case RequestName.REQUEST_ONE:
+                        res = {
+                            ...res,
+                            influencer: response.data.influencer,
+                            data: response.data.result
+                        };
+
+                        break;
+                    case RequestName.REQUEST_TWO:
+                        res = {
+                            ...res,
+                            influencer: response.data.influencer,
+                            productName: response.data.productName,
+                            nbOrders: response.data.nbOrders
+                        };
+
+                        break;
+                    case RequestName.REQUEST_THREE:
+                        res = {
+                            ...res,
+                            productName: response.data.productName,
+                            nbOrders: response.data.nbOrders
+                        };
+
+                        break;
+                }
             }
         } else {
             res = {
@@ -84,31 +160,28 @@ const Main = () => {
                 setEntity(value);
 
                 break;
-            case StateChanger.NB_INSERT:
-                setNbInsert(value);
-
-                break;
             case StateChanger.TYPE_REQUEST:
                 setTypeRequest(value);
 
                 break;
-
             case StateChanger.DEPTH:
                 setDepth(value);
-
-                break;
-
-            case StateChanger.ID_PRODUCT:
-                setIdProduct(value);
 
                 break;
             case StateChanger.DB_TYPE:
                 setDbType(value);
 
                 break;
-
             case StateChanger.LIMIT:
                 setLimit(value);
+
+                break;
+            case StateChanger.NB_INSERT_PERSON:
+                setNbInsertPerson(value);
+
+                break;
+            case StateChanger.NB_INSERT_PRODUCT:
+                setNbInsertProduct(value);
 
                 break;
         }
@@ -132,13 +205,6 @@ const Main = () => {
             </div>
             <div className="Actions-Btn-Container">
                 <RunButton
-                    dbType={dbType}
-                    typeRequest={typeRequest}
-                    entity={entity}
-                    depth={depth}
-                    idProduct={idProduct}
-                    nbInsert={nbInsert}
-                    limit={limit}
                     click={handleRunRequest}
                 />
             </div>
