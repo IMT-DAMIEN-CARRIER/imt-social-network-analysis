@@ -1,4 +1,4 @@
-version: '3.3'
+version: '3'
 services:
     # MariaDB database
     mariadb:
@@ -12,8 +12,8 @@ services:
             MYSQL_ROOT_PASSWORD: root
         ports:
             - '3306:3306'
-        volumes:
-            - ./mariadb_database/:/var/lib/mysql/
+    #        volumes:
+    #            - ./mariadb_database/:/var/lib/mysql/
 
     # Neo4j database
     neo4j:
@@ -26,8 +26,8 @@ services:
         environment:
             NEO4J_AUTH: 'neo4j/admin'
             NEO4J_dbms_memory_heap_max__size: 12G
-        volumes:
-            - ./neo4j_database/:/data/
+    #        volumes:
+    #            - ./neo4j_database/:/data/
 
     # phpMyAdmin for MariaDB
     phpmyadmin:

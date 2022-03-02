@@ -20,7 +20,7 @@ export const insertMysql = async (entity: string, nbInsertPerson: number, nbInse
 
     return await axios.post(
         url + '/add',
-        {params}
+        params
     );
 }
 
@@ -39,17 +39,6 @@ export const requestOneMysql = async (depth: number, limit: number): Promise<Axi
 export const requestTwoMysql = async (depth: number): Promise<AxiosResponse> => {
     return await axios.get(
         urlLocal + '/person/get/product-ordered-from-followers-by-influencer-by-product',
-        {
-            params: {
-                profondeur: depth
-            }
-        }
-    );
-}
-
-export const requestThreeMysql = async (depth: number): Promise<AxiosResponse> => {
-    return await axios.get(
-        urlLocal + '/person/get/product-virality',
         {
             params: {
                 profondeur: depth

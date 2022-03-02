@@ -34,7 +34,7 @@ const generateProductMysql = async (nbProduct) => {
     const tabPersons = await MysqlRepository.findAllPersons();
     const request = await MysqlRepository.getProductMaxId();
 
-    const tabPurchases = DataGenerationService.generateProductsRelationsDataMysql(tabPersons.result.query, request.data[0]['id']);
+    const tabPurchases = DataGenerationService.generateProductsRelationsDataMysql(tabPersons.result.data, parseInt(request.data[0]['id']));
     const durationInsertPurchase = await MysqlRepository.insertPurchase(tabPurchases);
 
     return {
@@ -120,32 +120,6 @@ const getProductsOrderedByFollowersAndByProductMysql = async (profondeur) => {
     };
 }
 
-const getProductViralityMysql = async (profondeur) => {
-    const requestInfluenceur = await MysqlRepository.getPersonMaxId();
-    const maxId = requestInfluenceur.data[0]['id'];
-
-    let idInfluenceur, idProduct = 0;
-
-    if (maxId) {
-        while (!idProduct) {
-            idInfluenceur = Math.floor(Math.random() * maxId + 1);
-
-            // On récupère la liste des produits pour l'influenceur aléatoire
-            const tabProduct = await MysqlRepository.getProductByInfluencer(idInfluenceur);
-
-            // On tire au sort l'un des produits de l'influenceur
-            const randomIdProduct = Math.floor(Math.random() * tabProduct.data.length);
-            idProduct = tabProduct.data[randomIdProduct]?.id;
-        }
-    }
-
-    return {
-        idProduct: idProduct,
-        idInfluencer: idInfluenceur,
-        result: await MysqlRepository.getProductViralityMysql(idInfluenceur, idProduct, profondeur)
-    }
-}
-
 module.exports = {
     generateDataMysql,
     generatePersonMysql,
@@ -154,6 +128,5 @@ module.exports = {
     generateProductNeo4j,
     findAllPerson,
     getProductsOrderedByFollowersMysql,
-    getProductsOrderedByFollowersAndByProductMysql,
-    getProductViralityMysql
+    getProductsOrderedByFollowersAndByProductMysql
 }

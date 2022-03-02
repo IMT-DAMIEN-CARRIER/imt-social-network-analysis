@@ -81,7 +81,7 @@ const ActionForm = (props: Props) => {
                     />
                 </div>
                 <div className="Actions-Btn-Container">
-                    <Button mt={4} className="Btn" onClick={props.click} isLoading={props.isLoading}>Récupérer</Button>
+                    <Button mt={4} className="Btn" onClick={props.click} isLoading={props.isLoading}>Insérer</Button>
                 </div>
             </div>
         )

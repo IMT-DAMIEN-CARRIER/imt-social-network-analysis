@@ -37,12 +37,12 @@ const generateRelationsDataMysql = (maxId) => {
 
         for (let i = 0; i < nbCurrentRelations; i++) {
             let randomId;
+
             do {
                 randomId = Math.floor(Math.random() * maxId + 1);
             } while (idAlreadyUsed.includes(randomId) || randomId === idPerson);
 
             idAlreadyUsed.push(randomId);
-
             relations.push({
                 "influencer": idPerson,
                 "follower": randomId
@@ -127,8 +127,7 @@ const generateProductsRelationsDataMysql = (tabPersons, maxIdProduct) => {
                 randomProduct = Math.floor(Math.random() * maxIdProduct + 1);
             } while (idAlreadyUsed.includes(randomProduct));
 
-            idAlreadyUsed.push(randomProduct)
-
+            idAlreadyUsed.push(randomProduct);
             relationTab.push({
                 "person": person.id,
                 "product": randomProduct

@@ -32,7 +32,7 @@ router.get('/person/generate', async (req, res) => {
  * Ajoute en base la personne renseignée
  */
 router.post('/person/add/', async (req, res) => {
-    const {nbPerson} = req.query;
+    const {nbPerson} = req.body;
 
     generatePersonMysql(nbPerson).then((response) => {
         res.json({response});
@@ -48,7 +48,7 @@ router.post('/person/generate/datas', async (req, res) => {
 });
 
 router.post('/product/add/', async (req, res) => {
-    const {nbProduct} = req.query;
+    const {nbProduct} = req.body;
 
     generateProductMysql(nbProduct).then((response) => {
         res.json({response});
@@ -77,14 +77,6 @@ router.get('/person/get/product-ordered-from-followers-by-influencer-by-product'
         res.json(response);
     });
 });
-
-router.get('/person/get/product-virality', async (req, res) => {
-    const {profondeur} = req.query;
-
-    getProductViralityMysql(profondeur).then((response) => {
-        res.json(response);
-    })
-})
 
 router.get('')
 
