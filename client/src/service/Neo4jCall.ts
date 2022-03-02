@@ -19,7 +19,7 @@ export const insertNeo4j = async (entity: string, nbInsertPerson: number, nbInse
         }
     }
 
-    return await axios.post(url + '/add', {params});
+    return await axios.post(url + '/add', params);
 }
 
 export const requestOneNeo4j = async (depth: number, limit: number) => {
@@ -43,15 +43,4 @@ export const requestTwoNeo4j = async (depth: number) => {
             }
         }
     )
-}
-
-export const requestThreeNeo4j = async (depth: number) => {
-    return await axios.get(
-        urlLocal + '/product/get/product-virality',
-        {
-            params: {
-                profondeur: depth
-            }
-        }
-    );
 }

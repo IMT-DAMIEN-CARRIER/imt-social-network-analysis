@@ -52,6 +52,8 @@ const Main = () => {
 
     async function handleRunRequest() {
         setLoading(true);
+        handleClear();
+
         const response = await switchTypeRequest(
             dbType,
             typeRequest,
@@ -70,13 +72,13 @@ const Main = () => {
                     case RequestName.INSERT:
                         if ('person' === entity) {
                             res = {
-                                durationInsertPersons: response.data.result.durationInsertPersons,
-                                durationInsertRelations: response.data.result.durationInsertRelations,
+                                durationInsertPersons: response.data.durationInsertPersons,
+                                durationInsertRelations: response.data.durationInsertRelations,
                             }
                         } else {
                             res = {
-                                durationInsertProducts: response.data.result.durationInsertProducts,
-                                durationInsertPurchase: response.data.result.durationInsertPurchase
+                                durationInsertProducts: response.data.durationInsertProducts,
+                                durationInsertPurchase: response.data.durationInsertPurchase
                             }
                         }
 
@@ -100,28 +102,33 @@ const Main = () => {
                         };
 
                         break;
-                    case RequestName.REQUEST_THREE:
-                        res = {
-                            status: response.data.result.status,
-                            time: response.data.result.time + 's',
-                            idProduct: response.data.idProduct,
-                            data: response.data.result.data
-                        };
-
-                        break;
                 }
             } else {
-                res = {
-                    status: response.data.status,
-                    time: response.data.time + 's'
-                };
-
                 switch (typeRequest) {
                     case RequestName.INSERT:
+                        if ('person' === entity) {
+                            res = {
+                                resultInsertPersons: response.data.resultInsertPersons,
+                                resultInsertRelations: response.data.resultInsertRelations,
+                            }
+
+                            if (nbInsertProduct > 0) {
+                                res = {
+                                    ...res,
+                                    resultGenerationProduct: response.data.resultGenerationProduct,
+                                }
+                            }
+                        } else {
+                            res = {
+                                resultGenerationProduct: response.data.resultGenerationProduct
+                            }
+                        }
+
                         break;
                     case RequestName.REQUEST_ONE:
                         res = {
-                            ...res,
+                            status: response.data.status,
+                            time: response.data.time + 's',
                             influencer: response.data.influencer,
                             data: response.data.result
                         };
@@ -129,16 +136,9 @@ const Main = () => {
                         break;
                     case RequestName.REQUEST_TWO:
                         res = {
-                            ...res,
+                            status: response.data.status,
+                            time: response.data.time + 's',
                             influencer: response.data.influencer,
-                            productName: response.data.productName,
-                            nbOrders: response.data.nbOrders
-                        };
-
-                        break;
-                    case RequestName.REQUEST_THREE:
-                        res = {
-                            ...res,
                             productName: response.data.productName,
                             nbOrders: response.data.nbOrders
                         };
@@ -147,8 +147,14 @@ const Main = () => {
                 }
             }
         } else {
-            res = {
-                error: 'Il y a eu une erreur dans la requête.'
+            if (RequestName.REQUEST_THREE === typeRequest) {
+                res = {
+                    data: 'Désolé ! Cette fonctionnalité n\'a pas été implémenté..'
+                };
+            } else {
+                res = {
+                    error: 'Il y a eu une erreur dans la requête.'
+                }
             }
         }
 
@@ -160,30 +166,37 @@ const Main = () => {
         switch (action) {
             case StateChanger.ENTITY:
                 setEntity(value);
+                handleClear();
 
                 break;
             case StateChanger.TYPE_REQUEST:
                 setTypeRequest(value);
+                handleClear();
 
                 break;
             case StateChanger.DEPTH:
                 setDepth(value);
+                handleClear();
 
                 break;
             case StateChanger.DB_TYPE:
                 setDbType(value);
+                handleClear();
 
                 break;
             case StateChanger.LIMIT:
                 setLimit(value);
+                handleClear();
 
                 break;
             case StateChanger.NB_INSERT_PERSON:
                 setNbInsertPerson(value);
+                handleClear();
 
                 break;
             case StateChanger.NB_INSERT_PRODUCT:
                 setNbInsertProduct(value);
+                handleClear();
 
                 break;
         }

@@ -169,11 +169,11 @@ const getProductsOrderedByFollowersNeo4j = async (influencer, depth, limit) => {
 
     try {
         const session = driver.session();
-        depth++
-        const query = ` MATCH (:Person {firstname: "${influencer.firstName}", lastname: "${influencer.lastName}"})<-[:Relation *1..${depth}]-(p:Person)
+        const query = ` MATCH (:Person {firstname: "${influencer.firstName}", lastname: "${influencer.lastName}"})<-[:Relation *0..${depth}]-(p:Person)
               WITH DISTINCT p
               MATCH (p)-[:Order]->(n:Product)
-              RETURN n.productName, COUNT(*)
+              RETURN n.productName, COUNT(*) as nbOrders
+              ORDER BY nbOrders DESC
               LIMIT ${limit}`;
 
         const start = Date.now();
@@ -211,8 +211,7 @@ const getProductsOrderedByFollowersNeo4j = async (influencer, depth, limit) => {
 const getProductsOrderedByFollowersAndByProductNeo4j = async (influencer, productName, depth) => {
     try {
         const session = driver.session();
-        depth++;
-        const query = ` MATCH (:Person{firstname: "${influencer.firstName}", lastname: "${influencer.lastName}"})<-[:Relation *1..${depth}]-(p:Person)
+        const query = ` MATCH (:Person{firstname: "${influencer.firstName}", lastname: "${influencer.lastName}"})<-[:Relation *0..${depth}]-(p:Person)
                   WITH DISTINCT p
                   MATCH (p)-[:Order]->(n:Product {productName: "${productName}"})
                   RETURN n.productName, COUNT(*)`;
@@ -247,39 +246,6 @@ const getProductsOrderedByFollowersAndByProductNeo4j = async (influencer, produc
     }
 }
 
-const getProductViralityNeo4j = async (productName, depth) => {
-    try {
-        const session = driver.session();
-        depth++;
-
-        const query = ` MATCH(:Product {productName:"${productName}"})<-[:Order]-(:Person)<-[:Relation *1..${depth}]-(p:Person)
-              WITH DISTINCT p
-              MATCH (p)-[n:Order]->(:Product {productName:'${productName}'})
-              RETURN COUNT (n)`;
-
-        const start = Date.now();
-        const data = await session.run(query, {});
-        const nbOrders = data.records[0].get(0).low;
-        const duration = Date.now() - start;
-        await session.close();
-
-        return {
-            status: 200,
-            time: duration / 1000,
-            productName: productName,
-            nbOrders: nbOrders
-        }
-    } catch (e) {
-        console.error(e);
-
-        return {
-            status: 409,
-            data: e,
-            time: null,
-        };
-    }
-}
-
 module.exports = {
     getAllDatas,
     insertObject,
@@ -287,6 +253,5 @@ module.exports = {
     insertRelations,
     insertOrders,
     getProductsOrderedByFollowersNeo4j,
-    getProductsOrderedByFollowersAndByProductNeo4j,
-    getProductViralityNeo4j
+    getProductsOrderedByFollowersAndByProductNeo4j
 }

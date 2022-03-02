@@ -1,4 +1,5 @@
 const mariadb = require('mariadb');
+const querystring = require("querystring");
 const pool = mariadb.createPool({
     host: '127.0.0.1',
     user: 'root',
@@ -172,12 +173,12 @@ const insertRelations = async (arrayRelations) => {
         for (let i = 0; i < maxVal - 1; i++) {
             let relation = arrayRelations[insertIndex];
 
-            request += '(' + relation.follower + ', ' + relation.followed + '),';
+            request += '(' + relation.influencer + ', ' + relation.follower + '),';
 
             insertIndex++;
         }
 
-        request += `(` + arrayRelations[insertIndex].follower + `, ` + arrayRelations[insertIndex].followed + `);`;
+        request += `(` + arrayRelations[insertIndex].influencer + `, ` + arrayRelations[insertIndex].follower + `);`;
         insertIndex++;
 
         const result = await executeQuery(request);
@@ -245,7 +246,6 @@ const insertPurchase = async (arrayPurchase) => {
             let relation = arrayPurchase[insertIndex];
 
             request += '(' + relation.person + ', ' + relation.product + '),';
-
             insertIndex++;
         }
 
@@ -294,29 +294,36 @@ const getProductByInfluencer = async (idInfluencer) => {
 
 const generateRequestSelectOneAndTwo = (request, depth, idInfluencer) => {
     if (depth > 0) {
-        for (let counter = 1; counter <= depth; counter++) {
-            request += ' OR o.id_person IN';
+        request += ' OR o.id_person IN ';
 
-            for (let i = 1; i < counter; i++) {
-                request += `
+        for (let counter = 1; counter < depth; counter++) {
+            request += `
                 (SELECT r.id_follower
                     FROM relation r
                     WHERE r.id_influencer IN 
                 `;
-            }
+        }
 
-            request += `
+        request += `
                 (SELECT r.id_follower
                     FROM relation r
                     WHERE r.id_influencer=` + idInfluencer;
 
-            request += ')'.repeat(counter);
-        }
+        request += ')'.repeat(depth);
     }
 
     return request
 }
 
+/**
+ * Première requête.
+ *
+ * @param idInfluencer
+ * @param depth
+ * @param limit
+ *
+ * @returns {Promise<{data: string, status: string}|{data: *, time: number, status: string}|{data: *, time: null, status: string}|undefined>}
+ */
 const getProductsOrderedByFollowersMysql = async (idInfluencer, depth, limit) => {
     if (idInfluencer === 0) {
         return {
@@ -325,19 +332,35 @@ const getProductsOrderedByFollowersMysql = async (idInfluencer, depth, limit) =>
         };
     }
 
-    let request = `SELECT pr.id, pr.productName, COUNT(o.id_person) AS nbOrders 
-                FROM product pr
-                JOIN orders o ON pr.id=o.id_product
-                JOIN person p ON p.id=o.id_person
-                WHERE p.id=` + idInfluencer
-    ;
+    depth++
 
-    request = generateRequestSelectOneAndTwo(request, depth, idInfluencer);
-    request += ' GROUP BY pr.id LIMIT ' + limit;
+    let request = `WITH RECURSIVE person_req(id, depth) AS (
+            SELECT id, 0 FROM person WHERE id=${idInfluencer}
+            UNION ALL
+            SELECT p.id, req.depth + 1
+            FROM person p, person_req req, relation r
+            WHERE p.id=r.id_influencer AND req.id = r.id_follower AND req.depth < ${depth}
+        )
+        SELECT pr.id, pr.productName, COUNT(o.id_person) AS nbOrders
+        FROM product pr
+        JOIN orders o ON pr.id=o.id_product
+        WHERE o.id_person IN (
+            SELECT id FROM person_req
+        )
+        GROUP BY pr.id ORDER BY nbOrders DESC LIMIT ` + limit;
 
     return await executeQuery(request);
 }
 
+/**
+ * Deuxième requête.
+ *
+ * @param idInfluencer
+ * @param idProduct
+ * @param depth
+ *
+ * @returns {Promise<{data: string, status: string}|{data: *, time: number, status: string}|{data: *, time: null, status: string}|undefined>}
+ */
 const getProductsOrderedByFollowersAndByProductMysql = async (idInfluencer, idProduct, depth) => {
     if (!idInfluencer) {
         return {
@@ -353,52 +376,22 @@ const getProductsOrderedByFollowersAndByProductMysql = async (idInfluencer, idPr
         };
     }
 
-    let request = `SELECT pr.id, pr.productName, COUNT(o.id_person) AS nbOrders 
-                FROM product pr
-                JOIN orders o ON pr.id=o.id_product
-                JOIN person p ON p.id=o.id_person
-                WHERE pr.id=` + idProduct + ' AND (p.id=' + idInfluencer
-    ;
+    depth++
 
-    request = generateRequestSelectOneAndTwo(request, depth, idInfluencer);
-    request += ') GROUP BY pr.id';
-
-    return await executeQuery(request);
-}
-
-const getProductViralityMysql = async (idInfluencer, idProduct, depth) => {
-    if (!idProduct) {
-        return {
-            status: '500',
-            data: 'Error 500 : product'
-        };
-    }
-
-    let request = `SELECT pr.productName, COUNT(o.id_person) AS 'nbOrder'
-            FROM product pr
-            JOIN orders o ON pr.id=o.id_product
-            WHERE pr.id=` + idProduct + ' AND (o.id_person=' + idInfluencer;
-
-    if (depth > 0) {
-        for (let counter = 1; counter <= depth; counter++) {
-            request += ' OR o.id_person IN ';
-
-            for (let i = 1; i < counter; i++) {
-                request += `
-                (SELECT r.id_follower
-                FROM relation r
-                WHERE r.id_influencer IN `;
-            }
-
-            request += `(SELECT r.id_follower
-                FROM relation r
-                WHERE r.id_influencer=` + idInfluencer + ')';
-
-            request += ')'.repeat(counter - 1);
-        }
-    }
-
-    request += ') GROUP BY pr.id';
+    let request = `WITH RECURSIVE person_req(id, depth) AS (
+            SELECT id, 0 FROM person WHERE id=${idInfluencer}
+            UNION ALL
+            SELECT p.id, req.depth + 1
+            FROM person p, person_req req, relation r
+            WHERE p.id=r.id_influencer AND req.id = r.id_follower AND req.depth < ${depth}
+        )
+        SELECT pr.id, pr.productName, COUNT(o.id_person) AS nbOrders
+        FROM product pr
+        JOIN orders o ON pr.id=o.id_product
+        WHERE o.id_person IN (
+            SELECT id FROM person_req
+        ) AND o.id_product=${idProduct}
+        GROUP BY pr.id`;
 
     return await executeQuery(request);
 }
@@ -414,6 +407,5 @@ module.exports = {
     findAllPersons,
     getProductByInfluencer,
     getProductsOrderedByFollowersMysql,
-    getProductsOrderedByFollowersAndByProductMysql,
-    getProductViralityMysql
+    getProductsOrderedByFollowersAndByProductMysql
 }

@@ -1,7 +1,7 @@
-import {insertMysql, requestOneMysql, requestThreeMysql, requestTwoMysql} from "./MysqlCall";
+import {insertMysql, requestOneMysql, requestTwoMysql} from "./MysqlCall";
 import {AxiosResponse} from "axios";
 import {RequestName} from "../components/Main";
-import {insertNeo4j, requestOneNeo4j, requestThreeNeo4j, requestTwoNeo4j} from "./Neo4jCall";
+import {insertNeo4j, requestOneNeo4j, requestTwoNeo4j} from "./Neo4jCall";
 
 export const switchTypeRequest = async (
     dbType: string,
@@ -21,7 +21,7 @@ export const switchTypeRequest = async (
             case RequestName.REQUEST_TWO:
                 return await requestTwoMysql(depth);
             case RequestName.REQUEST_THREE:
-                return await requestThreeMysql(depth);
+                return;
             default:
                 throw new Error('Erreur dans le type de requête');
         }
@@ -34,7 +34,7 @@ export const switchTypeRequest = async (
             case RequestName.REQUEST_TWO:
                 return await requestTwoNeo4j(depth);
             case RequestName.REQUEST_THREE:
-                return await requestThreeNeo4j(depth);
+                return;
             default:
                 throw new Error('Erreur dans le type de requête');
         }

@@ -15,14 +15,8 @@ router.get('/all', async (req, res) => {
     });
 });
 
-// router.get('/test', async (req, res) => {
-//     await getRandomProductName().then((response) => {
-//         res.json({res: response});
-//     });
-// });
-
 router.post('/person/add', async (req, res) => {
-    const {nbPerson, nbProduct} = req.query;
+    const {nbPerson, nbProduct} = req.body;
 
     generatePersonNeo4j(nbPerson, nbProduct).then((response) => {
         res.json(response);
@@ -30,7 +24,7 @@ router.post('/person/add', async (req, res) => {
 })
 
 router.post('/product/add', async (req, res) => {
-    const {nbProduct} = req.query;
+    const {nbProduct} = req.body;
 
     generateProductNeo4j(nbProduct).then((response) => {
         res.json(response);
@@ -57,15 +51,6 @@ router.get('/product/get/product-ordered-from-followers-by-influencer-by-product
         res.json(response);
     });
 });
-
-router.get('/product/get/product-virality', async (req, res) => {
-    const {profondeur} = req.query;
-    const productName = await getRandomProductName();
-
-    getProductViralityNeo4j(productName, profondeur).then((response) => {
-        res.json(response);
-    });
-})
 
 router.delete("/clearTable", async (req, res) => {
     await clearTable().then((response) => {

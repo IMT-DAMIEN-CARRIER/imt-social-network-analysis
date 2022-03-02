@@ -1,46 +1,106 @@
-# Getting Started with Create React App
+# Étude de données NoSQL
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+#### TP Réalisé par : Damien CARRIER — Clément SAVINAUD
 
-## Available Scripts
+#### Pour le 6 mars 2022
 
-In the project directory, you can run:
+---
 
-### `npm start`
+#### [Lien Github](https://github.com/MirakuSan/imt-social-network-analysis)
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+---
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Contexte
 
-### `npm test`
+L'objectif de ce TP est de modéliser, implémenter et tester en volumétrie un service d’analyse de comportement d’achat
+d’utilisateurs regroupés dans un réseau social. Cette implémentation et ces tests seront effectués *avec un SGBDR
+traditionnel **et** une base NoSQL* afin de comparer les avantages, inconvénients et performances de chaque solution.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+Les tests devront pouvoir être effectués par un utilisateur sans intervention dans le code donc il faut également
+développer un logiciel (Web ou client lourd au choix) permettant de lancer des requêtes sur les 2 bases avec
+mesure/affichage des temps de réponse.
 
-### `npm run build`
+## Cahier des charges
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Les utilisateurs sont regroupés au sein d’un réseau social leur permettant d’avoir des cercles de followers. Le lien de
+« follows » devra être orienté. En termes de volumétrie pour cette phase de test, on peut envisager de créer 1M
+utilisateurs. Chaque utilisateur pourrait avoir environ 0 – 20 followers directs.
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+**Attention** : sur plusieurs niveaux, un utilisateur peut être son propre follower ! Il faut prendre en compte ce point
+pour éviter, lors des recherches, de doublonner les résultats. Concernant les achats, la base pourrait contenir 10 000
+références de produits. Pour les achats, chaque utilisateur pourrait avoir commandé entre 0 et 5 produits parmi ces
+références.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+## Projet
 
-### `npm run eject`
+Vous pourrez retrouver ce projet en suivant le lien suivant :
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+```
+https://github.com/MirakuSan/imt-social-network-analysis
+```
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+Pour ce projet, nous avons réalisé une application web à l'aide de **ReactJS** pour le front et de **ExpressJS** pour le
+back.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+Pour les bases de données, nous avons fait le choix d'utiliser **MariaDB** pour la BDD SQL et **Neo4J** pour la BDD
+NoSQL.
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+### Entités
 
-## Learn More
+#### MariaDB
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+| Person     |                          |
+|:-----------|:------------------------:|
+| Attriute   |           Type           |
+| ID         | Integer (Auto Incrément) |
+| firstName  |          string          |
+| lastName   |          string          |
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+| Product     |                          |
+|:------------|:------------------------:|
+| Attriute    |           Type           |
+| ID          | Integer (Auto Incrément) |
+| productName |          string          |
+
+| Relation      |                          |
+|:--------------|:------------------------:|
+| Attriute      |           Type           |
+| id_influencer |          string          |
+| id_follower   |          string          |
+
+| Orders     |         |
+|:-----------|:-------:|
+| Attriute   |  Type   |
+| id_person  | Integer |
+| id_product | Integer |
+
+#### NoSQL
+
+Il n'y a pas vraiment d'entité pour le NoSQL mais voilà à quoi pourrait ressembler ces entités :
+
+| Person     |                      |
+|:-----------|:--------------------:|
+| Attriute   |         Type         |
+| firstName  |        string        |
+| lastName   |        string        |
+
+| Product     |                      |
+|:------------|:--------------------:|
+| Attriute    |         Type         |
+| productName |        string        |
+
+### Requêtes
+
+Pour faire nos recherches nous réaliserons 3 requêtes de recherche que nous transformerons en SQL et en Neo4J qui sont :
+
+1. Obtenir la liste et le nombre des produits commandés par les cercles de followers d’un individu (niveau 1, …, niveau
+   n) &rarr; cette requête permet d’observer le rôle d’influenceur d’un individu au sein du réseau social pour le
+   déclenchement d’achats.
+2. Même requête, mais avec spécification d’un produit particulier &rarr; cette requête permet d’observer le rôle
+   d’influenceur d’un individu suite à un « post » mentionnant un article spécifique.
+3. Pour une référence de produit donné, obtenir le nombre de personnes l’ayant commandé dans un cercle de followers
+   « **_orienté_** » de niveau n (à effectuer sur plusieurs niveaux : 0, 1, 2 …) &rarr; permet de rechercher les
+   produits « viraux », c’est-à-dire ceux qui se vendent le plus au sein de groupes de followers par opposition aux
+   achats isolés pour lesquels le groupe social n’a pas d’impact
+
+## Réalisations
