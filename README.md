@@ -1,91 +1,121 @@
 # Étude de données NoSQL
 
-#### TP Réalisé par : Damien CARRIER — Clément SAVINAUD
 
-#### Pour le 6 mars 2022
+
+**TP Réalisé par : Damien CARRIER — Clément SAVINAUD**
+
+**Pour le 6 mars 2022**
+
+
+
+[TOC]
 
 ---
 
-#### [Lien Github](https://github.com/MirakuSan/imt-social-network-analysis)
+
+
+[Lien Github](https://github.com/MirakuSan/imt-social-network-analysis)
+
+
 
 Lancement du projet :
 
-```
+```bash
 # Depuis la racine du projet :
-cd ../server
+cd server/
 npm i && npm start
-
 
 cd ../client
 docker-compose up -d
 npm i && npm start
 ```
 
+
+
+
+
 ---
+
+
 
 ## Contexte
 
-L'objectif de ce TP est de modéliser, implémenter et tester en volumétrie un service d’analyse de comportement d’achat
-d’utilisateurs regroupés dans un réseau social. Cette implémentation et ces tests seront effectués *avec un SGBDR
-traditionnel **et** une base NoSQL* afin de comparer les avantages, inconvénients et performances de chaque solution.
+L'objectif de ce TP est de modéliser, implémenter et tester en volumétrie un service d’analyse de comportement d’achat d’utilisateurs regroupés dans un réseau social.
 
-Les tests devront pouvoir être effectués par un utilisateur sans intervention dans le code donc il faut également
-développer un logiciel (Web ou client lourd au choix) permettant de lancer des requêtes sur les 2 bases avec
-mesure/affichage des temps de réponse.
+Cette implémentation et ces tests seront effectués *avec un SGBDR traditionnel **et** une base NoSQL* afin de comparer les avantages, inconvénients et performances de chaque solution.
+
+Les tests devront pouvoir être effectués par un utilisateur sans intervention dans le code donc il faut également développer un logiciel (Web ou client lourd au choix) permettant de lancer des requêtes sur les 2 bases avec mesure/affichage des temps de réponse.
+
+
 
 ## Cahier des charges
 
-Les utilisateurs sont regroupés au sein d’un réseau social leur permettant d’avoir des cercles de followers. Le lien de
-« follows » devra être orienté. En termes de volumétrie pour cette phase de test, on peut envisager de créer 1M
-utilisateurs. Chaque utilisateur pourrait avoir environ 0 – 20 followers directs.
+Les utilisateurs sont regroupés au sein d’un réseau social leur permettant d’avoir des cercles de followers. Le lien de « follows » devra être orienté. En termes de volumétrie pour cette phase de test, on peut envisager de créer 1M utilisateurs. Chaque utilisateur pourrait avoir environ 0 – 20 followers directs.
 
-**Attention** : sur plusieurs niveaux, un utilisateur peut être son propre follower ! Il faut prendre en compte ce point
-pour éviter, lors des recherches, de doublonner les résultats. Concernant les achats, la base pourrait contenir 10 000
-références de produits. Pour les achats, chaque utilisateur pourrait avoir commandé entre 0 et 5 produits parmi ces
-références.
+**Attention** : sur plusieurs niveaux, un utilisateur peut être son propre follower ! Il faut prendre en compte ce point pour éviter, lors des recherches, de doublonner les résultats. Concernant les achats, la base pourrait contenir 10 000 références de produits. Pour les achats, chaque utilisateur pourrait avoir commandé entre 0 et 5 produits parmi ces références.
+
+
 
 ## Projet
 
 Vous pourrez retrouver ce projet en suivant le lien suivant :
 
-```
+```bash
 https://github.com/MirakuSan/imt-social-network-analysis
 ```
 
-Pour ce projet, nous avons réalisé une application web à l'aide de **ReactJS** pour le front et de **ExpressJS** pour le
-back.
+Pour ce projet, nous avons réalisé une application web à l'aide de **ReactJS** pour le front et de **ExpressJS** pour le back.
 
-Pour les bases de données, nous avons fait le choix d'utiliser **MariaDB** pour la BDD SQL et **Neo4J** pour la BDD
-NoSQL.
+Pour les bases de données, nous avons fait le choix d'utiliser **MariaDB** pour la BDD SQL et **Neo4J** pour la BDD NoSQL.
+
+
 
 ### Entités
 
 #### MariaDB
 
-| Person     |                          |
-|:-----------|:------------------------:|
-| Attriute   |           Type           |
-| ID         | Integer (Auto Incrément) |
-| firstName  |          string          |
-| lastName   |          string          |
+
+
+**Modèle Conceptuel de Données** :
+
+
+
+![](/home/clement/Téléchargements/database.drawio(1).png)
+
+
+
+| Person    |                          |
+| :-------- | :----------------------: |
+| Attribute |           Type           |
+| ID        | Integer (Auto Incrément) |
+| firstName |          string          |
+| lastName  |          string          |
+
+
 
 | Product     |                          |
-|:------------|:------------------------:|
-| Attriute    |           Type           |
+| :---------- | :----------------------: |
+| Attribute   |           Type           |
 | ID          | Integer (Auto Incrément) |
 | productName |          string          |
 
-| Relation      |                          |
-|:--------------|:------------------------:|
-| Attriute      |           Type           |
-| id_influencer |          string          |
-| id_follower   |          string          |
+
+
+| Relation      |        |
+| :------------ | :----: |
+| Attribute     |  Type  |
+| id_influencer | string |
+| id_follower   | string |
+
+
 
 | Orders     |         |
-|:-----------|:-------:|
-| Attriute   |  Type   |
+| :--------- | :-----: |
+| Attribute  |  Type   |
 | id_person  | Integer |
 | id_product | Integer |
+
+
 
 #### NoSQL
 
@@ -97,24 +127,22 @@ Il n'y a pas vraiment d'entité pour le NoSQL mais voilà à quoi pourrait resse
 | firstName  |        string        |
 | lastName   |        string        |
 
+
+
 | Product     |                      |
 |:------------|:--------------------:|
 | Attriute    |         Type         |
 | productName |        string        |
 
+
+
 ### Requêtes
 
 Pour faire nos recherches nous réaliserons 3 requêtes de recherche que nous transformerons en SQL et en Neo4J qui sont :
 
-1. Obtenir la liste et le nombre des produits commandés par les cercles de followers d’un individu (niveau 1, …, niveau
-   n) &rarr; cette requête permet d’observer le rôle d’influenceur d’un individu au sein du réseau social pour le
-   déclenchement d’achats.
-2. Même requête, mais avec spécification d’un produit particulier &rarr; cette requête permet d’observer le rôle
-   d’influenceur d’un individu suite à un « post » mentionnant un article spécifique.
-3. Pour une référence de produit donné, obtenir le nombre de personnes l’ayant commandé dans un cercle de followers
-   « **_orienté_** » de niveau n (à effectuer sur plusieurs niveaux : 0, 1, 2 …) &rarr; permet de rechercher les
-   produits « viraux », c’est-à-dire ceux qui se vendent le plus au sein de groupes de followers par opposition aux
-   achats isolés pour lesquels le groupe social n’a pas d’impact
+1. Obtenir la liste et le nombre des produits commandés par les cercles de followers d’un individu (niveau 1, …, niveau n) &rarr; cette requête permet d’observer le rôle d’influenceur d’un individu au sein du réseau social pour le déclenchement d’achats.
+2. Même requête, mais avec spécification d’un produit particulier &rarr; cette requête permet d’observer le rôle d’influenceur d’un individu suite à un « post » mentionnant un article spécifique.
+3. Pour une référence de produit donné, obtenir le nombre de personnes l’ayant commandé dans un cercle de followers « **_orienté_** » de niveau n (à effectuer sur plusieurs niveaux : 0, 1, 2 …) &rarr; permet de rechercher les produits « viraux », c’est-à-dire ceux qui se vendent le plus au sein de groupes de followers par opposition aux achats isolés pour lesquels le groupe social n’a pas d’impact
 
 ## Réalisations
 
@@ -125,8 +153,7 @@ Dans les deux cas de type de BDD nous utilisons une méthode assez similaire pou
 - Insertion de **X** Personnes.
 - Génération d'un tableau de 0 à 20 relations pour ces **X** personnes
 - Insertion de ces relations créées
-    - Pour MariaDB nous utilisons des batchs de 100 000 relations pour l'insertion afin de ne pas faire sauter le
-      container.
+    - Pour MariaDB nous utilisons des batchs de 100 000 relations pour l'insertion afin de ne pas faire sauter le container.
 - Insertion de **Y** produits
 - Génération d'un tableau de 0 à 5 commandes pour ces **X** personnes
 - Insertions des commandes créées
@@ -298,6 +325,8 @@ const insertPurchase = async (arrayPurchase) => {
 }
 ```
 
+
+
 #### Neo4j
 
 - Insertion de personnes ou produit :
@@ -442,6 +471,8 @@ const insertOrders = async (tabOrders) => {
 }
 ```
 
+
+
 #### Résultats :
 
 - MariaDB :
@@ -511,6 +542,8 @@ const insertOrders = async (tabOrders) => {
 Nous pouvons remarquer que globalement le temps d'insertions est plus rapide sur Neo4j pour les ~10 millions de
 relations que pour Mysql. Pour la partie sur les produits, les temps sont globalement identiques. Par contre, concernant
 l'insertion de 1 million de personnes, Mysql est plus rapide que Neo4j.
+
+
 
 ### Recherches
 
@@ -594,6 +627,8 @@ const getProductsOrderedByFollowersNeo4j = async (influencer, depth, limit) => {
     }
 }
 ```
+
+
 
 ##### Résultats
 
@@ -949,6 +984,8 @@ const getProductsOrderedByFollowersAndByProductNeo4j = async (influencer, produc
 }
 ```
 
+
+
 ### Récapitulatif
 
 #### Insertions
@@ -959,6 +996,8 @@ const getProductsOrderedByFollowersAndByProductNeo4j = async (influencer, produc
 | Product   |  0.353s  |  1.444s  |
 | Orders    | 59.1889s |  72.64s  |
 | Relations | 516.538s | 189.436s |
+
+
 
 #### Recherches
 
@@ -980,4 +1019,20 @@ const getProductsOrderedByFollowersAndByProductNeo4j = async (influencer, produc
 | Profondeur 3 |  2.523s  | 0.85s  |
 | Profondeur 5 | 166.814s | 4.892s |
 
-### Conclusion
+
+
+## Conclusion
+
+
+
+A travers ce projet, nous avons pu comparer l'utilisation d'une base de données type SQL et une base NoSQL type graphe. Pour chacune de ces technologies nous avons pu constater plusieurs points forts, mais également des points faibles.
+
+Côté base de données SQL, nous avons pu constater que le temps d'insertion de données dans une table est très performante. En effet, l'insertion de personnes ou de produits est plutôt rapide et reste tout à fait acceptable. Cependant, lorsqu'on parle de création de relations complexes entre les données, on observe bien des problèmes de performances avec des insertions très lentes dans les tables Order et Relation.
+
+La base de données Neo4j qui est une base de type graphe, permet de s'affranchir des limites posées par une base SQL. En effet, malgré un temps d'insertion des données important sur des données sans relations, on a pu observer un énorme gain au niveau de la création de relations entre ces données.
+
+Ce gain de performances avec la base de données NoSQL se retrouve également sur la sélection de données. La récupération de données relationnelles est plus simple et performante avec la base Neo4j grâce à son architecture orientée graphe, tandis que la base SQL est limitée en terme de complexité de requêtes à ce niveau.
+
+
+
+Par conséquent, la réalisation de ce projet nous a permis de prendre connaissance d'une nouvelle technologie de stockage de données et avons pu en mesurer l'intérêt.
